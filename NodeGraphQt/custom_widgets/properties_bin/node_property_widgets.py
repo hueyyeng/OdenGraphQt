@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from collections import defaultdict
 
+from NodeGraphQt import BackdropNode
 from qtpy import QtWidgets, QtCore, QtGui
 
 from .node_property_factory import NodePropertyWidgetFactory
@@ -349,6 +350,9 @@ class NodePropWidget(QtWidgets.QWidget):
         layout.addWidget(self.__tab)
         layout.addWidget(self.type_wgt)
 
+        if isinstance(node, BackdropNode):
+            return
+
         self._port_connections = self._read_node(node)
 
     def __repr__(self):
@@ -444,9 +448,10 @@ class NodePropWidget(QtWidgets.QWidget):
 
         # add "ports" tab connections.
         ports_container = None
-        if node.inputs() or node.outputs():
-            ports_container = _PortConnectionsContainer(self, node=node)
-            self.__tab.addTab(ports_container, 'Ports')
+        if not isinstance(node, BackdropNode):
+            if node.inputs() or node.outputs():
+                ports_container = _PortConnectionsContainer(self, node=node)
+                self.__tab.addTab(ports_container, 'Ports')
 
         # hide/remove empty tabs with no property widgets.
         tab_index = {
@@ -755,17 +760,18 @@ class PropertiesBinWidget(QtWidgets.QWidget):
         prop_widget = NodePropWidget(node=node)
         prop_widget.property_closed.connect(self.__on_prop_close)
         prop_widget.property_changed.connect(self.__on_property_widget_changed)
-        port_connections = prop_widget.get_port_connection_widget()
-        port_connections.input_group.clicked.connect(
-            lambda v: self.__on_port_tree_visible_changed(
-                prop_widget.node_id(), v, port_connections.input_tree
+        if not isinstance(node, BackdropNode):
+            port_connections = prop_widget.get_port_connection_widget()
+            port_connections.input_group.clicked.connect(
+                lambda v: self.__on_port_tree_visible_changed(
+                    prop_widget.node_id(), v, port_connections.input_tree
+                )
             )
-        )
-        port_connections.output_group.clicked.connect(
-            lambda v: self.__on_port_tree_visible_changed(
-                prop_widget.node_id(), v, port_connections.output_tree
+            port_connections.output_group.clicked.connect(
+                lambda v: self.__on_port_tree_visible_changed(
+                    prop_widget.node_id(), v, port_connections.output_tree
+                )
             )
-        )
 
         self._prop_list.setCellWidget(0, 0, prop_widget)
 
