@@ -218,7 +218,7 @@ class _PortConnectionsContainer(QtWidgets.QWidget):
         tree_widget.setHeaderHidden(False)
         tree_widget.header().setStretchLastSection(False)
         QtWidgets.QHeaderView.setSectionResizeMode(
-            tree_widget.header(), 2, QtWidgets.QHeaderView.Stretch
+            tree_widget.header(), 2, QtWidgets.QHeaderView.ResizeMode.Stretch
         )
 
         group_box.layout().addWidget(tree_widget)
@@ -234,7 +234,10 @@ class _PortConnectionsContainer(QtWidgets.QWidget):
             port (NodeGraphQt.Port): port object.
         """
         item = QtWidgets.QTreeWidgetItem(tree)
-        item.setFlags(item.flags() & ~QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
+        # FIXME: TypeError: unsupported operand type(s) for &: 'ItemFlag' and 'GraphicsItemFlag'
+        #  although I'm unsure how QTreeWidgetItem flags is related with QGraphicsItem flags... probably
+        #  can safely remove this line in future updates
+        # item.setFlags(item.flags() & ~QtWidgets.QGraphicsItem.GraphicsItemFlag.ItemIsSelectable)
         item.setText(1, port.name())
         item.setToolTip(0, 'Lock Port')
         item.setToolTip(1, 'Port Name')
@@ -257,7 +260,7 @@ class _PortConnectionsContainer(QtWidgets.QWidget):
 
         focus_btn = QtWidgets.QPushButton()
         focus_btn.setIcon(QtGui.QIcon(
-            tree.style().standardPixmap(QtWidgets.QStyle.SP_DialogYesButton)
+            tree.style().standardPixmap(QtWidgets.QStyle.StandardPixmap.SP_DialogYesButton)
         ))
         focus_btn.clicked.connect(
             lambda: self._on_focus_to_node(self._ports.get(combo.currentText()))
@@ -645,7 +648,7 @@ class PropertiesBinWidget(QtWidgets.QWidget):
             widget.adjustSize()
             QtWidgets.QHeaderView.setSectionResizeMode(
                 self._prop_list.verticalHeader(),
-                QtWidgets.QHeaderView.ResizeToContents
+                QtWidgets.QHeaderView.ResizeMode.ResizeToContents
             )
 
     def __on_prop_close(self, node_id):
