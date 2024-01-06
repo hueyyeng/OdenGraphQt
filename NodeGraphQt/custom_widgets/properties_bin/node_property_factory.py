@@ -1,6 +1,7 @@
 from NodeGraphQt.constants import NodePropWidgetEnum
 from .custom_widget_color_picker import PropColorPickerRGB, PropColorPickerRGBA
 from .custom_widget_file_paths import PropFilePath, PropFileSavePath
+from .custom_widget_extra import PropLineEditValidatorCheckBox
 from .custom_widget_slider import PropSlider, PropDoubleSlider
 from .custom_widget_value_edit import FloatValueEdit, IntValueEdit
 from .custom_widget_vectors import PropVector2, PropVector3, PropVector4
@@ -44,6 +45,8 @@ class NodePropertyWidgetFactory(object):
             NodePropWidgetEnum.VECTOR4.value: PropVector4,
             NodePropWidgetEnum.FLOAT.value: FloatValueEdit,
             NodePropWidgetEnum.INT.value: IntValueEdit,
+            # extra widgets.
+            NodePropWidgetEnum.LINEEDIT_VALIDATOR_CHECKBOX.value: PropLineEditValidatorCheckBox,
         }
 
     def get_widget(self, widget_type=NodePropWidgetEnum.HIDDEN.value):

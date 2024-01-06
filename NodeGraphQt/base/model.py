@@ -120,8 +120,16 @@ class NodeModel(object):
         return '<{}(\'{}\') object at {}>'.format(
             self.__class__.__name__, self.name, self.id)
 
-    def add_property(self, name, value, items=None, range=None,
-                     widget_type=None, tab=None):
+    def add_property(
+            self,
+            name,
+            value,
+            items=None,
+            range=None,
+            widget_type=None,
+            tab=None,
+            **kwargs,
+    ):
         """
         add custom property or raises an error if the property name is already
         taken.
@@ -153,6 +161,8 @@ class NodeModel(object):
                 self._TEMP_property_attrs[name]['items'] = items
             if range:
                 self._TEMP_property_attrs[name]['range'] = range
+            if kwargs:
+                self._TEMP_property_attrs[name].update(kwargs)
         else:
             attrs = {
                 self.type_: {
@@ -166,6 +176,9 @@ class NodeModel(object):
                 attrs[self.type_][name]['items'] = items
             if range:
                 attrs[self.type_][name]['range'] = range
+            if kwargs:
+                attrs[self.type_][name].update(kwargs)
+
             self._graph_model.set_node_common_properties(attrs)
 
     def set_property(self, name, value):

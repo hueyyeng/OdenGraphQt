@@ -324,8 +324,16 @@ class NodeObject(object):
         """
         self.set_property('selected', selected)
 
-    def create_property(self, name, value, items=None, range=None,
-                        widget_type=None, tab=None):
+    def create_property(
+            self,
+            name,
+            value,
+            items=None,
+            range=None,
+            widget_type=None,
+            tab=None,
+            **kwargs,
+    ):
         """
         Creates a custom property to the node.
 
@@ -351,7 +359,7 @@ class NodeObject(object):
                 :class:`NodeGraphQt.PropertiesBinWidget`.
         """
         widget_type = widget_type or NodePropWidgetEnum.HIDDEN.value
-        self.model.add_property(name, value, items, range, widget_type, tab)
+        self.model.add_property(name, value, items, range, widget_type, tab, **kwargs)
 
     def properties(self):
         """

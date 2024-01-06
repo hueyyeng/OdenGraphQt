@@ -1,4 +1,6 @@
 from NodeGraphQt import BaseNode
+from NodeGraphQt.constants import NodePropWidgetEnum
+from NodeGraphQt.widgets.node_widgets import NodeLineEditValidatorCheckBox
 
 
 class DropdownMenuNode(BaseNode):
@@ -37,7 +39,12 @@ class TextInputNode(BaseNode):
     NODE_NAME = 'text'
 
     def __init__(self):
-        super(TextInputNode, self).__init__()
+        super().__init__()
+        pattern = r"^[A-Za-z0-9]*$"
+        placeholder = ""
+        tooltip = "Valid characters: A-Z a-z 0-9"
+        is_case_sensitive = True
+        checkbox_label = "Use Parser?"
 
         # create input & output ports
         self.add_input('in')
@@ -45,6 +52,77 @@ class TextInputNode(BaseNode):
 
         # create QLineEdit text input widget.
         self.add_text_input('my_input', 'Text Input', tab='widgets')
+
+        tool_btn_kwargs = {
+            "func": self._callback,
+            "tooltip": "Awesome"
+        }
+        kwargs = {
+            "validator": {
+                "pattern": pattern,
+                "placeholder": placeholder,
+                "tooltip": tooltip,
+                "is_case_insensitive": is_case_sensitive,
+                "checkbox_visible": True,
+                "tool_btn_visible": True,
+            },
+            "checkbox_label": checkbox_label,
+            "tool_btn": tool_btn_kwargs,
+        }
+        node_widget = NodeLineEditValidatorCheckBox(
+            pattern,
+            placeholder,
+            tooltip,
+            is_case_sensitive,
+            checkbox_label,
+            checkbox_visible=True,
+            tool_btn_visible=True,
+            widget_label="src_path",
+            parent=self.view,
+        )
+        node_widget.get_custom_widget().set_tool_btn(**tool_btn_kwargs)
+        self.add_custom_widget(
+            node_widget,
+            NodePropWidgetEnum.LINEEDIT_VALIDATOR_CHECKBOX.value,
+            "widgets",
+            **kwargs,
+        )
+
+        kwargs2 = {
+            "validator": {
+                "pattern": pattern,
+                "placeholder": placeholder,
+                "tooltip": tooltip,
+                "is_case_insensitive": is_case_sensitive,
+                "checkbox_visible": False,
+                "tool_btn_visible": False,
+            },
+            "checkbox_label": "Check In Luggage?",
+            "tool_btn": tool_btn_kwargs,
+        }
+        node_widget2 = NodeLineEditValidatorCheckBox(
+            pattern,
+            placeholder,
+            tooltip,
+            is_case_sensitive,
+            "Check In Luggage?",
+            checkbox_visible=False,
+            tool_btn_visible=False,
+            widget_label="dst_path",
+            parent=self.view,
+        )
+        node_widget2.get_custom_widget().set_tool_btn(**tool_btn_kwargs)
+        node_widget2.set_checkbox_visible(False)
+        node_widget2.set_tool_btn_visible(False)
+        self.add_custom_widget(
+            node_widget2,
+            NodePropWidgetEnum.LINEEDIT_VALIDATOR_CHECKBOX.value,
+            "widgets",
+            **kwargs2,
+        )
+
+    def _callback(self):
+        print(f"YOU HAVE CLICKED ON '{self.NODE_NAME}'")
 
 
 class CheckboxNode(BaseNode):

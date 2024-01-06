@@ -172,7 +172,7 @@ class BaseNode(NodeObject):
         """
         return self.view.widgets.get(name)
 
-    def add_custom_widget(self, widget, widget_type=None, tab=None):
+    def add_custom_widget(self, widget, widget_type=None, tab=None, **kwargs):
         """
         Add a custom node widget into the node.
 
@@ -191,13 +191,17 @@ class BaseNode(NodeObject):
         """
         if not isinstance(widget, NodeBaseWidget):
             raise NodeWidgetError(
-                '\'widget\' must be an instance of a NodeBaseWidget')
+                "'widget' must be an instance of a NodeBaseWidget"
+            )
 
         widget_type = widget_type or NodePropWidgetEnum.HIDDEN.value
-        self.create_property(widget.get_name(),
-                             widget.get_value(),
-                             widget_type=widget_type,
-                             tab=tab)
+        self.create_property(
+            widget.get_name(),
+            widget.get_value(),
+            widget_type=widget_type,
+            tab=tab,
+            **kwargs,
+        )
         widget.value_changed.connect(lambda k, v: self.set_property(k, v))
         widget._node = self
         self.view.add_widget(widget)
