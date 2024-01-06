@@ -1,5 +1,6 @@
-#!/usr/bin/python
-from qtpy import QtCore, QtWidgets
+from __future__ import annotations
+
+from qtpy import QtCore, QtWidgets, QtGui
 
 from NodeGraphQt.constants import ViewerEnum, Z_VAL_NODE_WIDGET
 from NodeGraphQt.errors import NodeWidgetError
@@ -445,3 +446,171 @@ class NodeCheckBox(NodeBaseWidget):
         """
         if state != self.get_value():
             self.get_custom_widget().setChecked(state)
+
+
+class _LineEditValidatorCheckBox(QtWidgets.QWidget):
+    def __init__(self, parent: "NodeLineEditValidatorCheckBox"):
+        super().__init__(parent=None)
+        self.parent_ = parent
+        self.setStyleSheet(
+            """
+            QLabel {
+              color: white;
+            }
+            QCheckBox {
+              color: white;
+            }
+            """
+        )
+        self.lineedit = QtWidgets.QLineEdit()
+        self.checkbox = QtWidgets.QCheckBox()
+        self.checkbox.setText(self.parent_.checkbox_label)
+        self.tool_btn = QtWidgets.QToolButton()
+        self.tool_btn.setVisible(False)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.lineedit)
+        layout.addWidget(self.checkbox)
+        layout.addWidget(self.tool_btn)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.addLayout(layout)
+
+        self.set_validator()
+
+    def set_tool_btn(self, func, icon: QtGui.QIcon = None, tooltip: str = None):
+        self.tool_btn.setVisible(True)
+        self.tool_btn.clicked.connect(func)
+
+        if icon is None:
+            icon = QtGui.QIcon(
+                self.style().standardPixmap(
+                    QtWidgets.QStyle.StandardPixmap.SP_TitleBarMaxButton
+                )
+            )
+
+        self.tool_btn.setIcon(icon)
+        if tooltip:
+            self.tool_btn.setToolTip(tooltip)
+
+    def set_validator(self):
+        pattern = self.parent_.pattern
+        validator = QtGui.QRegularExpressionValidator()
+        if self.parent_.is_case_sensitive:
+            regex = QtCore.QRegularExpression(
+                pattern,
+                QtCore.QRegularExpression.PatternOption.CaseInsensitiveOption,
+            )
+        else:
+            regex = QtCore.QRegularExpression(pattern)
+
+        validator.setRegularExpression(regex)
+        self.lineedit.setValidator(validator)
+
+        if self.parent_.tooltip:
+            self.lineedit.setToolTip(self.parent_.tooltip)
+
+        if self.parent_.placeholder:
+            self.lineedit.setPlaceholderText(self.parent_.placeholder)
+
+
+# Refer to PropLineEditValidatorCheckBox
+class NodeLineEditValidatorCheckBox(NodeBaseWidget):
+    def __init__(
+        self,
+        pattern: str,
+        placeholder="",
+        tooltip="",
+        is_case_sensitive=True,
+        checkbox_label="",
+        widget_label="Custom Widget",
+        checkbox_visible=True,
+        tool_btn_visible=True,
+        parent=None,
+    ):
+        super().__init__(parent)
+        self.pattern = pattern
+        self.placeholder = placeholder
+        self.tooltip = tooltip
+        self.is_case_sensitive = is_case_sensitive
+        self.checkbox_label = checkbox_label
+        self.checkbox_visible = checkbox_visible
+        self.tool_btn_visible = tool_btn_visible
+
+        # set the name for node property.
+        self.set_name(widget_label)
+
+        # set the label above the widget.
+        self.set_label(widget_label)
+
+        # set the custom widget.
+        self.set_custom_widget(_LineEditValidatorCheckBox(self))
+
+        # connect up the signals & slots.
+        self.wire_signals()
+
+    @property
+    def type_(self):
+        return 'LineEditValidatorCheckBoxNodeWidget'
+
+    def get_custom_widget(self) -> _LineEditValidatorCheckBox:
+        return super().get_custom_widget()
+
+    def wire_signals(self):
+        widget = self.get_custom_widget()
+
+        widget.lineedit.textChanged.connect(self.on_value_changed)
+        widget.checkbox.toggled.connect(self.on_value_changed)
+
+    def set_checkbox_visible(self, state: bool):
+        widget = self.get_custom_widget()
+        widget.checkbox.setVisible(state)
+
+    def set_tool_btn_visible(self, state: bool):
+        widget = self.get_custom_widget()
+        widget.tool_btn.setVisible(state)
+
+    def get_value(self):
+        widget = self.get_custom_widget()
+        return (
+            widget.lineedit.text(),
+            widget.checkbox.isChecked(),
+            self.pattern,
+            self.placeholder,
+            self.tooltip,
+            self.is_case_sensitive,
+            self.checkbox_label,
+            self.checkbox_visible,
+            self.tool_btn_visible,
+        )
+
+    def set_value(self, value):
+        widget = self.get_custom_widget()
+        if isinstance(value, bool):
+            widget.checkbox.setChecked(value)
+        elif isinstance(value, str):
+            widget.lineedit.setText(value)
+        else:
+            (
+                lineedit_val,
+                checkbox_val,
+                pattern,
+                placeholder,
+                tooltip,
+                is_case_sensitive,
+                checkbox_label,
+                checkbox_visible,
+                tool_btn_visible,
+            ) = value
+
+            widget.lineedit.setText(lineedit_val)
+            widget.checkbox.setChecked(checkbox_val)
+
+            self.pattern = pattern
+            self.placeholder = placeholder
+            self.tooltip = tooltip
+            self.is_case_sensitive = is_case_sensitive
+            self.checkbox_label = checkbox_label
+            self.checkbox_visible = checkbox_visible
+            self.tool_btn_visible = tool_btn_visible

@@ -1,10 +1,12 @@
 #!/usr/bin/python
 from collections import defaultdict
 
+from NodeGraphQt import BackdropNode
 from qtpy import QtWidgets, QtCore, QtGui
 
 from .node_property_factory import NodePropertyWidgetFactory
 from .prop_widgets_base import PropLineEdit
+from ...constants import NodePropWidgetEnum
 
 
 class _PropertiesDelegate(QtWidgets.QStyledItemDelegate):
@@ -55,10 +57,17 @@ class _PropertiesList(QtWidgets.QTableWidget):
         self.horizontalHeader().hide()
 
         QtWidgets.QHeaderView.setSectionResizeMode(
-            self.verticalHeader(), QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+            self.verticalHeader(),
+            QtWidgets.QHeaderView.ResizeMode.ResizeToContents,
+        )
         QtWidgets.QHeaderView.setSectionResizeMode(
-            self.horizontalHeader(), 0, QtWidgets.QHeaderView.ResizeMode.Stretch)
-        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollMode.ScrollPerPixel)
+            self.horizontalHeader(),
+            0,
+            QtWidgets.QHeaderView.ResizeMode.Stretch,
+        )
+        self.setVerticalScrollMode(
+            QtWidgets.QAbstractItemView.ScrollMode.ScrollPerPixel
+        )
 
     def wheelEvent(self, event):
         """
@@ -349,6 +358,9 @@ class NodePropWidget(QtWidgets.QWidget):
         layout.addWidget(self.__tab)
         layout.addWidget(self.type_wgt)
 
+        if isinstance(node, BackdropNode):
+            return
+
         self._port_connections = self._read_node(node)
 
     def __repr__(self):
@@ -395,7 +407,8 @@ class NodePropWidget(QtWidgets.QWidget):
 
         # add tabs.
         reserved_tabs = ['Node', 'Ports']
-        for tab in sorted(tab_mapping.keys()):
+        sorted_tab_mapping = sorted(tab_mapping.keys())
+        for tab in sorted_tab_mapping:
             if tab in reserved_tabs:
                 print('tab name "{}" is reserved by the "NodePropWidget" '
                       'please use a different tab name.')
@@ -406,24 +419,39 @@ class NodePropWidget(QtWidgets.QWidget):
         widget_factory = NodePropertyWidgetFactory()
 
         # populate tab properties.
-        for tab in sorted(tab_mapping.keys()):
-            prop_window = self.__tab_windows[tab]
+        for tab in sorted_tab_mapping:
+            prop_window: _PropertiesContainer = self.__tab_windows[tab]
             for prop_name, value in tab_mapping[tab]:
                 wid_type = model.get_widget_type(prop_name)
-                if wid_type == 0:
+                if wid_type == NodePropWidgetEnum.HIDDEN.value:
                     continue
 
                 widget = widget_factory.get_widget(wid_type)
                 if prop_name in common_props.keys():
-                    if 'items' in common_props[prop_name].keys():
+                    if 'items' in common_props[prop_name]:
                         widget.set_items(common_props[prop_name]['items'])
-                    if 'range' in common_props[prop_name].keys():
+                    if 'range' in common_props[prop_name]:
                         prop_range = common_props[prop_name]['range']
                         widget.set_min(prop_range[0])
                         widget.set_max(prop_range[1])
 
-                prop_window.add_widget(prop_name, widget, value,
-                                       prop_name.replace('_', ' '))
+                    # For PropLineEditValidatorCheckBox
+                    if "checkbox_label" in common_props[prop_name]:
+                        checkbox_label = common_props[prop_name]["checkbox_label"]
+                        widget.set_checkbox_label(checkbox_label)
+                    if "validator" in common_props[prop_name]:
+                        validator = common_props[prop_name]["validator"]
+                        widget.set_validator(validator)
+                    if "tool_btn" in common_props[prop_name]:
+                        tool_btn = common_props[prop_name]["tool_btn"]
+                        widget.set_tool_btn(**tool_btn)
+
+                prop_window.add_widget(
+                    prop_name,
+                    widget,
+                    value,
+                    # prop_name.replace('_', ' '),
+                )
                 widget.value_changed.connect(self._on_property_changed)
 
         # add "Node" tab properties. (default props)
@@ -433,10 +461,12 @@ class NodePropWidget(QtWidgets.QWidget):
         for prop_name in default_props:
             wid_type = model.get_widget_type(prop_name)
             widget = widget_factory.get_widget(wid_type)
-            prop_window.add_widget(prop_name,
-                                   widget,
-                                   model.get_property(prop_name),
-                                   prop_name.replace('_', ' '))
+            prop_window.add_widget(
+                prop_name,
+                widget,
+                model.get_property(prop_name),
+                # prop_name.replace('_', ' '),
+            )
 
             widget.value_changed.connect(self._on_property_changed)
 
@@ -444,9 +474,10 @@ class NodePropWidget(QtWidgets.QWidget):
 
         # add "ports" tab connections.
         ports_container = None
-        if node.inputs() or node.outputs():
-            ports_container = _PortConnectionsContainer(self, node=node)
-            self.__tab.addTab(ports_container, 'Ports')
+        if not isinstance(node, BackdropNode):
+            if node.inputs() or node.outputs():
+                ports_container = _PortConnectionsContainer(self, node=node)
+                self.__tab.addTab(ports_container, 'Ports')
 
         # hide/remove empty tabs with no property widgets.
         tab_index = {
@@ -755,17 +786,18 @@ class PropertiesBinWidget(QtWidgets.QWidget):
         prop_widget = NodePropWidget(node=node)
         prop_widget.property_closed.connect(self.__on_prop_close)
         prop_widget.property_changed.connect(self.__on_property_widget_changed)
-        port_connections = prop_widget.get_port_connection_widget()
-        port_connections.input_group.clicked.connect(
-            lambda v: self.__on_port_tree_visible_changed(
-                prop_widget.node_id(), v, port_connections.input_tree
+        if not isinstance(node, BackdropNode):
+            port_connections = prop_widget.get_port_connection_widget()
+            port_connections.input_group.clicked.connect(
+                lambda v: self.__on_port_tree_visible_changed(
+                    prop_widget.node_id(), v, port_connections.input_tree
+                )
             )
-        )
-        port_connections.output_group.clicked.connect(
-            lambda v: self.__on_port_tree_visible_changed(
-                prop_widget.node_id(), v, port_connections.output_tree
+            port_connections.output_group.clicked.connect(
+                lambda v: self.__on_port_tree_visible_changed(
+                    prop_widget.node_id(), v, port_connections.output_tree
+                )
             )
-        )
 
         self._prop_list.setCellWidget(0, 0, prop_widget)
 
