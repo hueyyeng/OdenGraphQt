@@ -9,14 +9,15 @@ class _NumberValueMenu(QtWidgets.QMenu):
     stepChange = QtCore.Signal()
 
     def __init__(self, parent=None):
-        super(_NumberValueMenu, self).__init__(parent)
+        super().__init__(parent)
         self.step = 1
         self.steps = []
         self.last_action = None
 
     def __repr__(self):
         return '<{}() object at {}>'.format(
-            self.__class__.__name__, hex(id(self)))
+            self.__class__.__name__, hex(id(self))
+        )
 
     # re-implemented.
 
@@ -31,14 +32,14 @@ class _NumberValueMenu(QtWidgets.QMenu):
         Additional functionality to emit signal.
         """
         self.mouseRelease.emit(event)
-        super(_NumberValueMenu, self).mouseReleaseEvent(event)
+        super().mouseReleaseEvent(event)
 
     def mouseMoveEvent(self, event):
         """
         Additional functionality to emit step changed signal.
         """
         self.mouseMove.emit(event)
-        super(_NumberValueMenu, self).mouseMoveEvent(event)
+        super().mouseMoveEvent(event)
         action = self.actionAt(event.pos())
         if action:
             if action is not self.last_action:
@@ -72,11 +73,11 @@ class _NumberValueMenu(QtWidgets.QMenu):
 
 class _NumberValueEdit(QtWidgets.QLineEdit):
 
-    value_changed = QtCore.Signal(object)
+    value_changed = QtCore.Signal(str, object)
 
     def __init__(self, parent=None, data_type=float):
-        super(_NumberValueEdit, self).__init__(parent)
-        self.setToolTip('"MMB + Drag Left/Right" to change values.')
+        super().__init__(parent)
+        self._tooltip = '"MMB + Drag Left/Right" to change values.'
         self.setText('0')
 
         self._MMB_STATE = False
@@ -98,11 +99,24 @@ class _NumberValueEdit(QtWidgets.QLineEdit):
 
     def __repr__(self):
         return '<{}() object at {}>'.format(
-            self.__class__.__name__, hex(id(self)))
+            self.__class__.__name__, hex(id(self))
+        )
 
     # re-implemented
 
-    def mouseMoveEvent(self, event):
+    def event(self, event: QtCore.QEvent):
+        if event.type() == QtCore.QEvent.ToolTip:
+            QtWidgets.QToolTip.hideText()
+            QtWidgets.QToolTip.showText(
+                event.globalPos(),
+                self._tooltip,
+                msecShowTime=3500,
+            )
+            return True
+
+        return super().event(event)
+
+    def mouseMoveEvent(self, event: QtGui.QMouseEvent):
         if self._MMB_STATE:
             if self._previous_x is None:
                 self._previous_x = event.x()
@@ -114,22 +128,22 @@ class _NumberValueEdit(QtWidgets.QLineEdit):
                 value = value + int(delta * self._speed) * self._step
                 self.set_value(value)
                 self._on_text_changed()
-        super(_NumberValueEdit, self).mouseMoveEvent(event)
+        super().mouseMoveEvent(event)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QtGui.QMouseEvent):
         if event.button() == QtCore.Qt.MouseButton.MiddleButton:
             self._MMB_STATE = True
             self._reset_previous_x()
             self._menu.exec_(QtGui.QCursor.pos())
-        super(_NumberValueEdit, self).mousePressEvent(event)
+        super().mousePressEvent(event)
 
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
         self._menu.close()
         self._MMB_STATE = False
-        super(_NumberValueEdit, self).mouseReleaseEvent(event)
+        super().mouseReleaseEvent(event)
 
-    def keyPressEvent(self, event):
-        super(_NumberValueEdit, self).keyPressEvent(event)
+    def keyPressEvent(self, event: QtGui.QKeyEvent):
+        super().keyPressEvent(event)
         if event.key() == QtCore.Qt.Key.Key_Up:
             return
         elif event.key() == QtCore.Qt.Key.Key_Down:
@@ -141,7 +155,7 @@ class _NumberValueEdit(QtWidgets.QLineEdit):
         self._previous_x = None
 
     def _on_text_changed(self):
-        self.value_changed.emit(self.get_value())
+        self.value_changed.emit(self.toolTip(), self.get_value())
 
     def _convert_text(self, text):
         # int("1.0") will return error
@@ -184,13 +198,13 @@ class _NumberValueEdit(QtWidgets.QLineEdit):
 class IntValueEdit(_NumberValueEdit):
 
     def __init__(self, parent=None):
-        super(IntValueEdit, self).__init__(parent, data_type=int)
+        super().__init__(parent, data_type=int)
 
 
 class FloatValueEdit(_NumberValueEdit):
 
     def __init__(self, parent=None):
-        super(FloatValueEdit, self).__init__(parent, data_type=float)
+        super().__init__(parent, data_type=float)
 
 
 if __name__ == '__main__':
