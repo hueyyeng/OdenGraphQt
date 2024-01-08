@@ -2,6 +2,7 @@
 from collections import defaultdict
 
 from NodeGraphQt import BackdropNode
+from NodeGraphQt.custom_widgets import CustomCheckBox
 from qtpy import QtWidgets, QtCore, QtGui
 
 from .node_property_factory import NodePropertyWidgetFactory
@@ -255,7 +256,7 @@ class _PortConnectionsContainer(QtWidgets.QWidget):
 
         # TODO: will need to update this checkbox lock logic to work with
         #       the undo/redo functionality.
-        lock_chb = QtWidgets.QCheckBox()
+        lock_chb = CustomCheckBox()
         lock_chb.setChecked(port.locked())
         lock_chb.clicked.connect(lambda x: port.set_locked(x))
         tree.setItemWidget(item, 0, lock_chb)

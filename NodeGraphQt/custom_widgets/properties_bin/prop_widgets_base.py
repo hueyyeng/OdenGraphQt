@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from NodeGraphQt.custom_widgets import CustomCheckBox
 from qtpy import QtWidgets, QtCore
 
 
@@ -136,7 +137,7 @@ class PropComboBox(QtWidgets.QComboBox):
                 self.value_changed.emit(self.toolTip(), value)
 
 
-class PropCheckBox(QtWidgets.QCheckBox):
+class PropCheckBox(CustomCheckBox):
     """
     Displays a node property as a "QCheckBox" widget in the PropertiesBin
     widget.

@@ -146,6 +146,8 @@ class _NumberValueEdit(QtWidgets.QLineEdit):
     def _convert_text(self, text):
         # int("1.0") will return error
         # so we use int(float("1.0"))
+        # FIXME: Better to raise exception and handle the
+        #  data type casting in subclasses reimplementation
         try:
             value = float(text)
         except:
@@ -159,10 +161,10 @@ class _NumberValueEdit(QtWidgets.QLineEdit):
     def set_data_type(self, data_type):
         self._data_type = data_type
         self._menu.set_data_type(data_type)
-        if data_type is int:
-            self.setValidator(QtGui.QIntValidator())
-        elif data_type is float:
-            self.setValidator(QtGui.QDoubleValidator())
+        self.setValidator(
+            QtGui.QIntValidator() if data_type is int
+            else QtGui.QDoubleValidator()
+        )
 
     def set_steps(self, steps=None):
         steps = steps or [0.001, 0.01, 0.1, 1, 10, 100, 1000]

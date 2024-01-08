@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from qtpy import QtCore, QtWidgets, QtGui
 
+from NodeGraphQt.custom_widgets import CustomCheckBox
 from NodeGraphQt.constants import ViewerEnum, Z_VAL_NODE_WIDGET
 from NodeGraphQt.errors import NodeWidgetError
 
@@ -399,7 +400,7 @@ class NodeCheckBox(NodeBaseWidget):
 
     def __init__(self, parent=None, name='', label='', text='', state=False):
         super(NodeCheckBox, self).__init__(parent, name, label)
-        _cbox = QtWidgets.QCheckBox(text)
+        _cbox = CustomCheckBox(text)
         text_color = tuple(map(lambda i, j: i - j, (255, 255, 255),
                                ViewerEnum.BACKGROUND_COLOR.value))
         style_dict = {
@@ -463,7 +464,7 @@ class _LineEditValidatorCheckBox(QtWidgets.QWidget):
             """
         )
         self.lineedit = QtWidgets.QLineEdit()
-        self.checkbox = QtWidgets.QCheckBox()
+        self.checkbox = CustomCheckBox()
         self.checkbox.setText(self.parent_.checkbox_label)
         self.tool_btn = QtWidgets.QToolButton()
         self.tool_btn.setVisible(False)

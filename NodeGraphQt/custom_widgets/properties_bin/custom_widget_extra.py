@@ -1,6 +1,7 @@
 import importlib.util
 from typing import TypedDict
 
+from NodeGraphQt.custom_widgets import CustomCheckBox
 from qtpy import QtWidgets, QtCore, QtGui
 
 from .prop_widgets_abstract import BaseProperty
@@ -29,7 +30,7 @@ class PropLineEditValidatorCheckBox(BaseProperty):
         self._lineedit.editingFinished.connect(self._on_value_change)
         self._lineedit.clearFocus()
 
-        self._checkbox = QtWidgets.QCheckBox()
+        self._checkbox = CustomCheckBox()
         self._checkbox.toggled.connect(self._on_value_change)
         self._checkbox_label = ""
 
@@ -44,24 +45,6 @@ class PropLineEditValidatorCheckBox(BaseProperty):
         hbox.addWidget(self._lineedit)
         hbox.addWidget(self._checkbox)
         hbox.addWidget(self._tool_btn)
-
-        self._comel_checkbox_fix(12)
-
-    def _comel_checkbox_fix(self, size=12):
-        # For Comel Light/Dark theme toggle library: https://github.com/hueyyeng/Comel
-        _comel = importlib.util.find_spec("comel")
-        if not _comel:
-            return
-
-        self.setStyleSheet(
-            f"""
-              QCheckBox::indicator {{
-                width: {size}px;
-                height: {size}px;
-              }}
-            """
-        )
-        self._checkbox.resize(size, size)
 
     def set_validator(self, validator_data: TValidator):
         self._validator_pattern = validator_data.get("pattern")

@@ -1,4 +1,6 @@
 from NodeGraphQt.constants import NodePropWidgetEnum
+from NodeGraphQt.custom_widgets.properties_bin.prop_widgets_abstract import BaseProperty
+
 from .custom_widget_color_picker import PropColorPickerRGB, PropColorPickerRGBA
 from .custom_widget_file_paths import PropFilePath, PropFileSavePath
 from .custom_widget_extra import PropLineEditValidatorCheckBox
@@ -49,7 +51,7 @@ class NodePropertyWidgetFactory(object):
             NodePropWidgetEnum.LINEEDIT_VALIDATOR_CHECKBOX.value: PropLineEditValidatorCheckBox,
         }
 
-    def get_widget(self, widget_type=NodePropWidgetEnum.HIDDEN.value):
+    def get_widget(self, widget_type=NodePropWidgetEnum.HIDDEN.value) -> BaseProperty:
         """
         Return a new instance of a node property widget.
 
