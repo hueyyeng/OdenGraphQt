@@ -1,7 +1,6 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
 import math
 from distutils.version import LooseVersion
+from typing import Literal
 
 from qtpy import QtGui, QtCore, QtWidgets
 
@@ -75,7 +74,9 @@ class NodeViewer(QtWidgets.QGraphicsView):
         self.resize(850, 800)
 
         self._scene_range = QtCore.QRectF(
-            0, 0, self.size().width(), self.size().height())
+            0, 0,
+            self.size().width(), self.size().height(),
+        )
         self._update_scene()
         self._last_size = self.size()
 
@@ -85,8 +86,10 @@ class NodeViewer(QtWidgets.QGraphicsView):
         self._detached_port = None
         self._start_port = None
         self._origin_pos = None
-        self._previous_pos = QtCore.QPoint(int(self.width() / 2),
-                                           int(self.height() / 2))
+        self._previous_pos = QtCore.QPoint(
+            int(self.width() / 2),
+            int(self.height() / 2),
+        )
         self._prev_selection_nodes = []
         self._prev_selection_pipes = []
         self._node_positions = {}
@@ -157,6 +160,12 @@ class NodeViewer(QtWidgets.QGraphicsView):
         # TODO: maybe this should be a reference to the graph model instead?
         self.accept_connection_types = None
         self.reject_connection_types = None
+
+        # Text Overlay stuff
+        self._text_overlay_align: Literal["left", "center", "right"] = "left"
+        self._text_overlay_size = 40
+        self._text_overlay_spacing = 90
+        self._text_overlay: str = ""
 
     def __repr__(self):
         return '<{}() object at {}>'.format(
@@ -338,7 +347,70 @@ class NodeViewer(QtWidgets.QGraphicsView):
                 ports.append([i.input_port, i.output_port])
         self.connection_sliced.emit(ports)
 
+    def _draw_text_overlay(
+            self,
+            align: Literal["left", "center", "right"],
+            size: int,
+            spacing: int,
+    ):
+        """
+        Mimics Unreal Engine Blueprint/Material Editor text overlay placement
+
+        Args:
+            align (str): the overlay text alignment relative to viewport.
+            size (int): the font size.
+            spacing (int): the font spacing.
+
+        """
+        if not self._text_overlay:
+            return
+
+        # TODO: Probably want to allow for configurable custom font and color...
+        #  for now Noto Sans JP should suffice as it is free for use and
+        #  should cover JP devs who need to use hiragana/katakana/kanji
+        font = QtGui.QFont("Noto Sans JP", size, QtGui.QFont.Weight.Bold)
+        font.setLetterSpacing(QtGui.QFont.SpacingType.PercentageSpacing, spacing)
+        pen = QtGui.QPen(QtGui.QColor(255, 255, 255, 60), 0.65)
+
+        # TODO: Text with linebreaks messes up the bounding box size and placement...
+        fm = QtGui.QFontMetrics(font)
+        fm_width = fm.boundingRect(self._text_overlay).width()
+        fm_height = fm.boundingRect(self._text_overlay).height()
+
+        x = 10
+        y = self.height() - fm_height - 5
+        if align == "center":
+            x = self.width() / 2 - fm_width / 2
+
+        if align == "right":
+            x = self.width() - fm_width - 20
+
+        rect = QtCore.QRectF(
+            x, y,
+            fm_width + 10,
+            fm_height,
+        )
+
+        viewport_painter = QtGui.QPainter(self.viewport())
+        viewport_painter.setFont(font)
+        viewport_painter.setPen(pen)
+        viewport_painter.drawText(
+            rect,
+            QtCore.Qt.AlignmentFlag.AlignRight,
+            self._text_overlay,
+        )
+
     # --- reimplemented events ---
+
+    def drawForeground(self, painter, rect):
+        super().drawForeground(painter, rect)
+        # Note for devs, this can be implemented in any applicable functions just that I prefer
+        # to put this logic in drawForeground as "text overlay should be drawn at foreground"
+        self._draw_text_overlay(
+            align=self._text_overlay_align,
+            size=self._text_overlay_size,
+            spacing=self._text_overlay_spacing,
+        )
 
     def resizeEvent(self, event):
         w, h = self.size().width(), self.size().height()
@@ -1602,6 +1674,23 @@ class NodeViewer(QtWidgets.QGraphicsView):
         self.CTRL_state = False
         self.SHIFT_state = False
         self.ALT_state = False
+
+    def get_text_overlay(self) -> str:
+        return self._text_overlay
+
+    def set_text_overlay(
+            self,
+            text: str,
+            align: Literal["left", "center", "right"] = "left",
+            size: int = None,
+            spacing: int = None,
+    ):
+        self._text_overlay = text
+        self._text_overlay_align = align
+        self._text_overlay_size = size or 40
+        self._text_overlay_spacing = spacing or 90
+
+        self.force_update()
 
     def use_OpenGL(self):
         """
