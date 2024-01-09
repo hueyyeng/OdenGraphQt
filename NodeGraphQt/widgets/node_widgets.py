@@ -9,8 +9,8 @@ from NodeGraphQt.errors import NodeWidgetError
 
 class _NodeGroupBox(QtWidgets.QGroupBox):
 
-    def __init__(self, label, parent=None):
-        super(_NodeGroupBox, self).__init__(parent)
+    def __init__(self, label: str, parent=None):
+        super().__init__(parent)
         layout = QtWidgets.QVBoxLayout(self)
         layout.setSpacing(1)
         self.setTitle(label)
@@ -18,11 +18,15 @@ class _NodeGroupBox(QtWidgets.QGroupBox):
     def setTitle(self, text):
         margin = (0, 2, 0, 0) if text else (0, 0, 0, 0)
         self.layout().setContentsMargins(*margin)
-        super(_NodeGroupBox, self).setTitle(text)
+        super().setTitle(text)
 
     def setTitleAlign(self, align='center'):
-        text_color = tuple(map(lambda i, j: i - j, (255, 255, 255),
-                               ViewerEnum.BACKGROUND_COLOR.value))
+        text_color = tuple(
+            map(
+                lambda i, j: i - j, (255, 255, 255),
+                ViewerEnum.BACKGROUND_COLOR.value,
+            )
+        )
         style_dict = {
             'QGroupBox': {
                 'background-color': 'rgba(0, 0, 0, 0)',
@@ -40,6 +44,7 @@ class _NodeGroupBox(QtWidgets.QGroupBox):
                 'padding': '0px',
             }
         }
+
         if self.title():
             style_dict['QGroupBox']['padding-top'] = '14px'
         else:
@@ -53,6 +58,7 @@ class _NodeGroupBox(QtWidgets.QGroupBox):
         elif align == 'right':
             style_dict['QGroupBox::title']['subcontrol-position'] += 'top right'
             style_dict['QGroupBox::title']['margin-right'] = '4px'
+
         stylesheet = ''
         for css_class, css in style_dict.items():
             style = '{} {{\n'.format(css_class)
@@ -60,6 +66,7 @@ class _NodeGroupBox(QtWidgets.QGroupBox):
                 style += '  {}:{};\n'.format(elm_name, elm_val)
             style += '}\n'
             stylesheet += style
+
         self.setStyleSheet(stylesheet)
 
     def add_node_widget(self, widget):
@@ -222,6 +229,7 @@ class NodeBaseWidget(QtWidgets.QGraphicsProxyWidget):
         if self.widget():
             raise NodeWidgetError('Custom node widget already set.')
         group = _NodeGroupBox(self._label)
+        # TODO: Need to handle setting minimum width for custom widget
         group.add_node_widget(widget)
         self.setWidget(group)
 
@@ -520,12 +528,13 @@ class _LineEditValidatorCheckBox(QtWidgets.QWidget):
 class NodeLineEditValidatorCheckBox(NodeBaseWidget):
     def __init__(
         self,
+        widget_name: str,
         pattern: str,
         placeholder="",
         tooltip="",
         is_case_sensitive=True,
         checkbox_label="",
-        widget_label="Custom Widget",
+        widget_label="",
         checkbox_visible=True,
         tool_btn_visible=True,
         parent=None,
@@ -540,7 +549,7 @@ class NodeLineEditValidatorCheckBox(NodeBaseWidget):
         self.tool_btn_visible = tool_btn_visible
 
         # set the name for node property.
-        self.set_name(widget_label)
+        self.set_name(widget_name)
 
         # set the label above the widget.
         self.set_label(widget_label)
