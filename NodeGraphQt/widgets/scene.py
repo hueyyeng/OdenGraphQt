@@ -1,5 +1,4 @@
-#!/usr/bin/python
-from qtpy import QtGui, QtCore, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 from NodeGraphQt.constants import ViewerEnum
 
@@ -17,15 +16,6 @@ class NodeScene(QtWidgets.QGraphicsScene):
         cls_name = str(self.__class__.__name__)
         return '<{}("{}") object at {}>'.format(
             cls_name, self.viewer(), hex(id(self)))
-
-    # def _draw_text(self, painter, pen):
-    #     font = QtGui.QFont()
-    #     font.setPixelSize(48)
-    #     painter.setFont(font)
-    #     parent = self.viewer()
-    #     pos = QtCore.QPoint(20, parent.height() - 20)
-    #     painter.setPen(pen)
-    #     painter.drawText(parent.mapToScene(pos), 'Not Editable')
 
     def _draw_grid(self, painter, rect, pen, grid_size):
         """

@@ -70,6 +70,7 @@ class TextInputNode(BaseNode):
             "tool_btn": tool_btn_kwargs,
         }
         node_widget = NodeLineEditValidatorCheckBox(
+            "src_path",
             pattern,
             placeholder,
             tooltip,
@@ -101,6 +102,7 @@ class TextInputNode(BaseNode):
             "tool_btn": tool_btn_kwargs,
         }
         node_widget2 = NodeLineEditValidatorCheckBox(
+            "dst_path",
             pattern,
             placeholder,
             tooltip,
