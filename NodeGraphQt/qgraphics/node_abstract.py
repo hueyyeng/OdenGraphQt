@@ -15,7 +15,7 @@ class AbstractNodeItem(QtWidgets.QGraphicsItem):
     """
 
     def __init__(self, name='node', parent=None):
-        super(AbstractNodeItem, self).__init__(parent)
+        super().__init__(parent)
         self.setFlags(self.GraphicsItemFlag.ItemIsSelectable | self.GraphicsItemFlag.ItemIsMovable)
         self.setCacheMode(ITEM_CACHE_MODE)
         self.setZValue(Z_VAL_NODE)
@@ -49,11 +49,11 @@ class AbstractNodeItem(QtWidgets.QGraphicsItem):
             event (QtWidgets.QGraphicsSceneMouseEvent): mouse event.
         """
         self._properties['selected'] = True
-        super(AbstractNodeItem, self).mousePressEvent(event)
+        super().mousePressEvent(event)
 
     def setSelected(self, selected):
         self._properties['selected'] = selected
-        super(AbstractNodeItem, self).setSelected(selected)
+        super().setSelected(selected)
 
     def pre_init(self, viewer, pos=None):
         """
@@ -203,6 +203,14 @@ class AbstractNodeItem(QtWidgets.QGraphicsItem):
     def name(self, name=''):
         self._properties['name'] = name
         self.setToolTip('node: {}'.format(name))
+
+    @property
+    def identifier(self):
+        return self._properties['identifier']
+
+    @identifier.setter
+    def identifier(self, name=''):
+        self._properties['identifier'] = name
 
     @property
     def properties(self):

@@ -1,4 +1,5 @@
-#!/usr/bin/python
+from __future__ import annotations
+
 from collections import OrderedDict
 
 from NodeGraphQt.base.commands import NodeVisibleCmd, NodeWidgetVisibleCmd
@@ -11,6 +12,7 @@ from NodeGraphQt.errors import (
     NodeWidgetError
 )
 from NodeGraphQt.qgraphics.node_base import NodeItem
+from NodeGraphQt.qgraphics.port import PortItem
 from NodeGraphQt.widgets.node_widgets import (
     NodeBaseWidget,
     NodeCheckBox,
@@ -57,7 +59,7 @@ class BaseNode(NodeObject):
     NODE_NAME = 'Node'
 
     def __init__(self, qgraphics_item=None):
-        super(BaseNode, self).__init__(qgraphics_item or NodeItem)
+        super().__init__(qgraphics_item or NodeItem)
         self._inputs = []
         self._outputs = []
 
@@ -65,8 +67,13 @@ class BaseNode(NodeObject):
         """
         Update the node model from view.
         """
+        reserved_names = [
+            "inputs",
+            "outputs",
+            "identifier",
+        ]
         for name, val in self.view.properties.items():
-            if name in ['inputs', 'outputs']:
+            if name in reserved_names:
                 continue
             self.model.set_property(name, val)
 
@@ -355,13 +362,14 @@ class BaseNode(NodeObject):
         port_args = [name, multi_input, display_name, locked]
         if painter_func and callable(painter_func):
             port_args.append(painter_func)
-        view = self.view.add_input(*port_args)
+
+        port_item: PortItem = self.view.add_input(*port_args)
 
         if color:
-            view.color = color
-            view.border_color = [min([255, max([0, i + 80])]) for i in color]
+            port_item.color = color
+            port_item.border_color = [min([255, max([0, i + 80])]) for i in color]
 
-        port = Port(self, view)
+        port = Port(self, port_item)
         port.model.type_ = PortTypeEnum.IN.value
         port.model.name = name
         port.model.display_name = display_name
@@ -680,7 +688,7 @@ class BaseNode(NodeObject):
         Returns all nodes connected from the input ports.
 
         Returns:
-            dict: {<input_port>: <node_list>}
+            dict[Port, list[BaseNode]]: {<input_port>: <node_list>}
         """
         nodes = OrderedDict()
         for p in self.input_ports():
@@ -692,14 +700,14 @@ class BaseNode(NodeObject):
         Returns all nodes connected from the output ports.
 
         Returns:
-            dict: {<output_port>: <node_list>}
+            dict[Port, list[BaseNode]]: {<output_port>: <node_list>}
         """
         nodes = OrderedDict()
         for p in self.output_ports():
             nodes[p] = [cp.node() for cp in p.connected_ports()]
         return nodes
 
-    def add_accept_port_type(self, port, port_type_data):
+    def add_accept_port_type(self, port: Port, port_type_data: dict):
         """
         Add a accept constrain to a specified node port.
 
@@ -712,9 +720,9 @@ class BaseNode(NodeObject):
         .. code-block:: python
 
             {
-                'port_name': 'foo'
-                'port_type': PortTypeEnum.IN.value
-                'node_type': 'io.github.jchanvfx.NodeClass'
+                'port_name': 'foo',
+                'port_type': PortTypeEnum.IN.value,
+                'node_type': 'io.github.jchanvfx.NodeClass',
             }
 
         See Also:
@@ -734,7 +742,7 @@ class BaseNode(NodeObject):
             node_type=self.type_,
             accept_pname=port_type_data['port_name'],
             accept_ptype=port_type_data['port_type'],
-            accept_ntype=port_type_data['node_type']
+            accept_ntype=port_type_data['node_type'],
         )
 
     def accepted_port_types(self, port):
@@ -772,9 +780,9 @@ class BaseNode(NodeObject):
         .. code-block:: python
 
             {
-                'port_name': 'foo'
-                'port_type': PortTypeEnum.IN.value
-                'node_type': 'io.github.jchanvfx.NodeClass'
+                'port_name': 'foo',
+                'port_type': PortTypeEnum.IN.value,
+                'node_type': 'io.github.jchanvfx.NodeClass',
             }
 
         See Also:
@@ -794,7 +802,7 @@ class BaseNode(NodeObject):
             node_type=self.type_,
             reject_pname=port_type_data['port_name'],
             reject_ptype=port_type_data['port_type'],
-            reject_ntype=port_type_data['node_type']
+            reject_ntype=port_type_data['node_type'],
         )
 
     def rejected_port_types(self, port):

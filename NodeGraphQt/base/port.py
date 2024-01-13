@@ -1,12 +1,19 @@
-#!/usr/bin/python
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from NodeGraphQt import NodeObject
+    from NodeGraphQt.qgraphics.port import PortItem
+
 from NodeGraphQt.base.commands import (
+    NodeInputConnectedCmd,
+    NodeInputDisconnectedCmd,
     PortConnectedCmd,
     PortDisconnectedCmd,
     PortLockedCmd,
     PortUnlockedCmd,
     PortVisibleCmd,
-    NodeInputConnectedCmd,
-    NodeInputDisconnectedCmd
 )
 from NodeGraphQt.base.model import PortModel
 from NodeGraphQt.constants import PortTypeEnum
@@ -28,17 +35,26 @@ class Port(object):
 
     Args:
         node (NodeGraphQt.NodeObject): parent node.
-        port (PortItem): graphic item used for drawing.
+        port_item (PortItem): graphic item used for drawing.
     """
 
-    def __init__(self, node, port):
-        self.__view = port
+    def __init__(self, node, port_item):
+        self.__port_item_view = port_item
         self.__model = PortModel(node)
+        self.__node = node
 
     def __repr__(self):
         port = str(self.__class__.__name__)
         return '<{}("{}") object at {}>'.format(
             port, self.name(), hex(id(self)))
+
+    @property
+    def port_item(self) -> PortItem:
+        return self.__port_item_view
+
+    @property
+    def port_node(self) -> NodeObject:
+        return self.__node
 
     @property
     def view(self):
@@ -48,7 +64,7 @@ class Port(object):
         Returns:
             NodeGraphQt.qgraphics.port.PortItem: port item.
         """
-        return self.__view
+        return self.__port_item_view
 
     @property
     def model(self):
@@ -210,58 +226,58 @@ class Port(object):
                     ports.append(node.inputs()[port_name])
         return ports
 
-    def connect_to(self, port=None, push_undo=True):
+    def connect_to(self, target_port=None, push_undo=True):
         """
         Create connection to the specified port and emits the
         :attr:`NodeGraph.port_connected` signal from the parent node graph.
 
         Args:
-            port (NodeGraphQt.Port): port object.
+            target_port (NodeGraphQt.Port): port object.
             push_undo (bool): register the command to the undo stack. (default: True)
         """
-        if not port:
+        if not target_port:
             return
 
-        if self in port.connected_ports():
+        if self in target_port.connected_ports():
             return
 
-        if self.locked() or port.locked():
-            name = [p.name() for p in [self, port] if p.locked()][0]
+        if self.locked() or target_port.locked():
+            name = [p.name() for p in [self, target_port] if p.locked()][0]
             raise PortError(
                 'Can\'t connect port because "{}" is locked.'.format(name))
 
+        own_node_type = self.node().type_
+        target_node_type = target_port.node().type_
+
         # validate accept connection.
-        node_type = self.node().type_
-        accepted_types = port.accepted_port_types().get(node_type)
-        if accepted_types:
-            accepted_pnames = accepted_types.get(self.type_()) or set([])
+        target_accepted_types = target_port.accepted_port_types().get(own_node_type)
+        if target_accepted_types:
+            accepted_pnames = target_accepted_types.get(self.type_()) or set([])
             if self.name() not in accepted_pnames:
                 return
-        node_type = port.node().type_
-        accepted_types = self.accepted_port_types().get(node_type)
-        if accepted_types:
-            accepted_pnames = accepted_types.get(port.type_()) or set([])
-            if port.name() not in accepted_pnames:
+        own_accepted_types = self.accepted_port_types().get(target_node_type)
+        if own_accepted_types:
+            accepted_pnames = own_accepted_types.get(target_port.type_()) or set([])
+            if target_port.name() not in accepted_pnames:
                 return
 
         # validate reject connection.
-        node_type = self.node().type_
-        rejected_types = port.rejected_port_types().get(node_type)
-        if rejected_types:
-            rejected_pnames = rejected_types.get(self.type_()) or set([])
+        target_rejected_types = target_port.rejected_port_types().get(own_node_type)
+        if target_rejected_types:
+            rejected_pnames = target_rejected_types.get(self.type_()) or set([])
             if self.name() in rejected_pnames:
                 return
-        node_type = port.node().type_
-        rejected_types = self.rejected_port_types().get(node_type)
-        if rejected_types:
-            rejected_pnames = rejected_types.get(port.type_()) or set([])
-            if port.name() in rejected_pnames:
+        own_rejected_types = self.rejected_port_types().get(target_node_type)
+        if own_rejected_types:
+            rejected_pnames = own_rejected_types.get(target_port.type_()) or set([])
+            if target_port.name() in rejected_pnames:
                 return
 
         # make the connection from here.
         graph = self.node().graph
         viewer = graph.viewer()
 
+        # FIXME: undo_stack needs to be declare early or outside or try except blah
         if push_undo:
             undo_stack = graph.undo_stack()
             undo_stack.beginMacro('connect port')
@@ -271,18 +287,18 @@ class Port(object):
         if not self.multi_connection() and src_conn_ports:
             pre_conn_port = src_conn_ports[0]
 
-        if not port:
+        if not target_port:
             if pre_conn_port:
                 if push_undo:
-                    undo_stack.push(PortDisconnectedCmd(self, port))
-                    undo_stack.push(NodeInputDisconnectedCmd(self, port))
+                    undo_stack.push(PortDisconnectedCmd(self, target_port))
+                    undo_stack.push(NodeInputDisconnectedCmd(self, target_port))
                     undo_stack.endMacro()
                 else:
-                    PortDisconnectedCmd(self, port).redo()
-                    NodeInputDisconnectedCmd(self, port).redo()
+                    PortDisconnectedCmd(self, target_port).redo()
+                    NodeInputDisconnectedCmd(self, target_port).redo()
             return
 
-        if graph.acyclic() and viewer.acyclic_check(self.view, port.view):
+        if graph.acyclic() and viewer.acyclic_check(self.view, target_port.view):
             if pre_conn_port:
                 if push_undo:
                     undo_stack.push(PortDisconnectedCmd(self, pre_conn_port))
@@ -294,15 +310,15 @@ class Port(object):
                     NodeInputDisconnectedCmd(self, pre_conn_port).redo()
                 return
 
-        trg_conn_ports = port.connected_ports()
-        if not port.multi_connection() and trg_conn_ports:
-            dettached_port = trg_conn_ports[0]
+        trg_conn_ports = target_port.connected_ports()
+        if not target_port.multi_connection() and trg_conn_ports:
+            detached_port = trg_conn_ports[0]
             if push_undo:
-                undo_stack.push(PortDisconnectedCmd(port, dettached_port))
-                undo_stack.push(NodeInputDisconnectedCmd(port, dettached_port))
+                undo_stack.push(PortDisconnectedCmd(target_port, detached_port))
+                undo_stack.push(NodeInputDisconnectedCmd(target_port, detached_port))
             else:
-                PortDisconnectedCmd(port, dettached_port).redo()
-                NodeInputDisconnectedCmd(port, dettached_port).redo()
+                PortDisconnectedCmd(target_port, detached_port).redo()
+                NodeInputDisconnectedCmd(target_port, detached_port).redo()
         if pre_conn_port:
             if push_undo:
                 undo_stack.push(PortDisconnectedCmd(self, pre_conn_port))
@@ -312,47 +328,47 @@ class Port(object):
                 NodeInputDisconnectedCmd(self, pre_conn_port).redo()
 
         if push_undo:
-            undo_stack.push(PortConnectedCmd(self, port))
-            undo_stack.push(NodeInputConnectedCmd(self, port))
+            undo_stack.push(PortConnectedCmd(self, target_port))
+            undo_stack.push(NodeInputConnectedCmd(self, target_port))
             undo_stack.endMacro()
         else:
-            PortConnectedCmd(self, port).redo()
-            NodeInputConnectedCmd(self, port).redo()
+            PortConnectedCmd(self, target_port).redo()
+            NodeInputConnectedCmd(self, target_port).redo()
 
         # emit "port_connected" signal from the parent graph.
-        ports = {p.type_(): p for p in [self, port]}
+        ports = {p.type_(): p for p in [self, target_port]}
         graph.port_connected.emit(ports[PortTypeEnum.IN.value],
                                   ports[PortTypeEnum.OUT.value])
 
-    def disconnect_from(self, port=None, push_undo=True):
+    def disconnect_from(self, target_port=None, push_undo=True):
         """
         Disconnect from the specified port and emits the
         :attr:`NodeGraph.port_disconnected` signal from the parent node graph.
 
         Args:
-            port (NodeGraphQt.Port): port object.
+            target_port (NodeGraphQt.Port): port object.
             push_undo (bool): register the command to the undo stack. (default: True)
         """
-        if not port:
+        if not target_port:
             return
 
-        if self.locked() or port.locked():
-            name = [p.name() for p in [self, port] if p.locked()][0]
+        if self.locked() or target_port.locked():
+            name = [p.name() for p in [self, target_port] if p.locked()][0]
             raise PortError(
                 'Can\'t disconnect port because "{}" is locked.'.format(name))
 
         graph = self.node().graph
         if push_undo:
             graph.undo_stack().beginMacro('disconnect port')
-            graph.undo_stack().push(PortDisconnectedCmd(self, port))
-            graph.undo_stack().push(NodeInputDisconnectedCmd(self, port))
+            graph.undo_stack().push(PortDisconnectedCmd(self, target_port))
+            graph.undo_stack().push(NodeInputDisconnectedCmd(self, target_port))
             graph.undo_stack().endMacro()
         else:
-            PortDisconnectedCmd(self, port).redo()
-            NodeInputDisconnectedCmd(self, port).redo()
+            PortDisconnectedCmd(self, target_port).redo()
+            NodeInputDisconnectedCmd(self, target_port).redo()
 
         # emit "port_disconnected" signal from the parent graph.
-        ports = {p.type_(): p for p in [self, port]}
+        ports = {p.type_(): p for p in [self, target_port]}
         graph.port_disconnected.emit(ports[PortTypeEnum.IN.value],
                                      ports[PortTypeEnum.OUT.value])
 
@@ -475,16 +491,16 @@ class Port(object):
 
     @property
     def color(self):
-        return self.__view.color
+        return self.__port_item_view.color
 
     @color.setter
     def color(self, color=(0, 0, 0, 255)):
-        self.__view.color = color
+        self.__port_item_view.color = color
 
     @property
     def border_color(self):
-        return self.__view.border_color
+        return self.__port_item_view.border_color
 
     @border_color.setter
     def border_color(self, color=(0, 0, 0, 255)):
-        self.__view.border_color = color
+        self.__port_item_view.border_color = color

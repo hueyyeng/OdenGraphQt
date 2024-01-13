@@ -437,14 +437,14 @@ class NodeGraph(QtCore.QObject):
         for p1_view, p2_view in disconnected:
             node1 = self._model.nodes[p1_view.node.id]
             node2 = self._model.nodes[p2_view.node.id]
-            port1 = getattr(node1, ptypes[p1_view.port_type])()[p1_view.name]
-            port2 = getattr(node2, ptypes[p2_view.port_type])()[p2_view.name]
+            port1: Port = getattr(node1, ptypes[p1_view.port_type])()[p1_view.name]
+            port2: Port = getattr(node2, ptypes[p2_view.port_type])()[p2_view.name]
             port1.disconnect_from(port2)
         for p1_view, p2_view in connected:
             node1 = self._model.nodes[p1_view.node.id]
             node2 = self._model.nodes[p2_view.node.id]
-            port1 = getattr(node1, ptypes[p1_view.port_type])()[p1_view.name]
-            port2 = getattr(node2, ptypes[p2_view.port_type])()[p2_view.name]
+            port1: Port = getattr(node1, ptypes[p1_view.port_type])()[p1_view.name]
+            port2: Port = getattr(node2, ptypes[p2_view.port_type])()[p2_view.name]
             port1.connect_to(port2)
         self._undo_stack.endMacro()
 
@@ -1311,7 +1311,7 @@ class NodeGraph(QtCore.QObject):
                                 node_type=node.type_,
                                 accept_pname=accept_pname,
                                 accept_ptype=accept_ptype,
-                                accept_ntype=accept_ntype
+                                accept_ntype=accept_ntype,
                             )
         reject_types = node.model.__dict__.pop(
             '_TEMP_reject_connection_types'
@@ -1327,7 +1327,7 @@ class NodeGraph(QtCore.QObject):
                                 node_type=node.type_,
                                 reject_pname=reject_pname,
                                 reject_ptype=reject_ptype,
-                                reject_ntype=reject_ntype
+                                reject_ntype=reject_ntype,
                             )
 
         node._graph = self
