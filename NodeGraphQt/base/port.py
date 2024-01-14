@@ -238,7 +238,8 @@ class Port(object):
         if not target_port:
             return
 
-        if self in target_port.connected_ports():
+        is_valid_accept_constraint = target_port.port_item.validate_accept_constraint(self.port_item)
+        if not is_valid_accept_constraint and self in target_port.connected_ports():
             return
 
         if self.locked() or target_port.locked():
@@ -299,7 +300,7 @@ class Port(object):
             return
 
         if graph.acyclic() and viewer.acyclic_check(self.view, target_port.view):
-            if pre_conn_port:
+            if not is_valid_accept_constraint and pre_conn_port:
                 if push_undo:
                     undo_stack.push(PortDisconnectedCmd(self, pre_conn_port))
                     undo_stack.push(NodeInputDisconnectedCmd(

@@ -58,7 +58,10 @@ class PortItem(QtWidgets.QGraphicsItem):
         }
         self._accept_constraint[node_identifier].append(data)
 
-    def validate_accept_constraint(self, target_port: PortItem) -> bool:
+    def validate_accept_constraint(self, target_port: PortItem) -> bool | None:
+        if not self._accept_constraint:
+            return None
+
         if target_port.node.identifier not in self._accept_constraint:
             return False
 
