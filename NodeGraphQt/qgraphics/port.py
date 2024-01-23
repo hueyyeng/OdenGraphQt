@@ -76,6 +76,39 @@ class PortItem(QtWidgets.QGraphicsItem):
 
         return is_valid
 
+    def set_reject_constraint(
+            self,
+            port_name: str,
+            port_type: Literal["in", "out"],
+            node_identifier: str,
+    ):
+        if node_identifier not in self._reject_constraint:
+            self._reject_constraint[node_identifier] = []
+
+        data = {
+            "port_name": port_name,
+            "port_type": port_type,
+        }
+        self._reject_constraint[node_identifier].append(data)
+
+    def validate_reject_constraint(self, target_port: PortItem) -> bool | None:
+        if not self._reject_constraint:
+            return None
+
+        if target_port.node.identifier not in self._reject_constraint:
+            return False
+
+        is_valid = False
+        constraints: list[dict] = self._reject_constraint[target_port.node.identifier]
+        for constraint in constraints:
+            is_same_name = target_port.name == constraint["port_name"]
+            is_same_type = target_port.port_type == constraint["port_type"]
+            if is_same_name and is_same_type:
+                is_valid = True
+                break
+
+        return is_valid
+
     def __str__(self):
         return '{}.PortItem("{}")'.format(self.__module__, self.name)
 

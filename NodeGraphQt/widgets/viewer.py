@@ -997,6 +997,20 @@ class NodeViewer(QtWidgets.QGraphicsView):
         )
         return result
 
+    def _validate_reject_constraint(self, from_port: PortItem, to_port: PortItem) -> bool | None:
+        is_valid_from = from_port.validate_reject_constraint(to_port)
+        is_valid_to = to_port.validate_reject_constraint(from_port)
+        if is_valid_from is None and is_valid_to is None:
+            return None
+
+        result = any(
+            [
+                is_valid_from,
+                is_valid_to,
+            ]
+        )
+        return result
+
     def _validate_accept_connection(self, from_port: PortItem, to_port: PortItem) -> bool:
         """
         Check if a pipe connection is allowed if there are a constraints set
@@ -1190,6 +1204,14 @@ class NodeViewer(QtWidgets.QGraphicsView):
             self._start_port, end_port
         )
         if accept_constraint is False:
+            self._detached_port = None
+            self.end_live_connection()
+            return
+
+        reject_constraint = self._validate_reject_constraint(
+            self._start_port, end_port
+        )
+        if reject_constraint is True:
             self._detached_port = None
             self.end_live_connection()
             return

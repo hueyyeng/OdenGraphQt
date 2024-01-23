@@ -26,6 +26,7 @@ class PublishWriteNodeItem(NodeItem):
 
 
 class PrevNextNode(BaseNode):
+    __identifier__ = "action"
     NODE_NAME = "Action Node"
 
     def __init__(self):
@@ -38,23 +39,51 @@ class PrevNextNode(BaseNode):
         self.add_output("_next", multi_output=False)
 
 
-class FoobarNode(PrevNextNode):
-    NODE_NAME = "Foobar"
+class IngredientNode(BaseNode):
+    __identifier__ = "ingredient"
+
+
+class SpamNode(IngredientNode):
+    __identifier__ = "spam"
+    NODE_NAME = "Spam"
 
     def __init__(self):
         super().__init__()
-        self.add_output(
+        spam_port = self.add_output(
             "spam",
             color=(50, 150, 222),
         )
 
 
-class SpamNode(BaseNode):
-    NODE_NAME = "Spam"
+class EggNode(IngredientNode):
+    __identifier__ = "egg"
+    NODE_NAME = "Egg"
 
     def __init__(self):
         super().__init__()
-        self.add_input("spam", color=(222, 15, 0), multi_input=False)
+        egg_port = self.add_output(
+            "egg",
+            color=(50, 150, 222),
+        )
+
+
+class MealNode(BaseNode):
+    NODE_NAME = "Meal"
+
+    def __init__(self):
+        super().__init__()
+        spam_port = self.add_input("spam", color=(222, 15, 0), multi_input=False)
+        spam_port.port_item.set_reject_constraint(
+            port_name="egg",
+            port_type=PortTypeEnum.OUT.value,
+            node_identifier="egg",
+        )
+        egg_port = self.add_input("egg", color=(222, 15, 0), multi_input=False)
+        egg_port.port_item.set_reject_constraint(
+            port_name="spam",
+            port_type=PortTypeEnum.OUT.value,
+            node_identifier="spam",
+        )
 
 
 class BasePublishNode(PrevNextNode):
@@ -117,20 +146,23 @@ if __name__ == '__main__':
 
     # registered example nodes.
     graph.register_nodes([
-        FoobarNode,
         SpamNode,
+        EggNode,
+        MealNode,
         PublishFileActionNode,
         PublishFileToManyActionNode,
         PublishWriteNode,
     ])
 
     # add nodes
-    graph.add_node(FoobarNode())
     graph.add_node(SpamNode())
+    graph.add_node(EggNode())
+    graph.add_node(MealNode())
     graph.add_node(PublishFileToManyActionNode())
     graph.add_node(PublishFileActionNode())
     graph.add_node(PublishWriteNode())
     graph.auto_layout_nodes()
+    graph.clear_selection()
 
     # show the node graph widget.
     graph_widget = graph.widget
