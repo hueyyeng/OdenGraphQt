@@ -85,7 +85,7 @@ class NodeModel(object):
         self._custom_prop = {}
 
         # node graph model set at node added time.
-        self._graph_model = None
+        self._graph_model: NodeGraphModel | None = None
 
         # store the property attributes.
         # (deleted when node is added to the graph)
@@ -113,6 +113,7 @@ class NodeModel(object):
 
         # temp store connection constrains.
         # (deleted when node is added to the graph)
+        # OGQ-1: refer to NodeGraph.add_node for the temp key pop
         self._TEMP_accept_connection_types = {}
         self._TEMP_reject_connection_types = {}
 
@@ -247,8 +248,12 @@ class NodeModel(object):
 
     def add_port_accept_connection_type(
             self,
-            port_name, port_type, node_type,
-            accept_pname, accept_ptype, accept_ntype
+            port_name,
+            port_type,
+            node_type,
+            accept_pname,
+            accept_ptype,
+            accept_ntype,
     ):
         """
         Convenience function for adding to the "accept_connection_types" dict.
@@ -259,21 +264,25 @@ class NodeModel(object):
             port_name (str): current port name.
             port_type (str): current port type.
             node_type (str): current port node type.
-            accept_pname (str):port name to accept.
+            accept_pname (str): port name to accept.
             accept_ptype (str): port type accept.
-            accept_ntype (str):port node type to accept.
+            accept_ntype (str): port node type to accept.
         """
         model = self._graph_model
         if model:
             model.add_port_accept_connection_type(
                 port_name, port_type, node_type,
-                accept_pname, accept_ptype, accept_ntype
+                accept_pname, accept_ptype, accept_ntype,
             )
             return
 
         connection_data = self._TEMP_accept_connection_types
         keys = [node_type, port_type, port_name, accept_ntype]
+        # TODO: This is a very weird for loop condition aka for context, this
+        #  always result in connection_data becoming empty dict since the original
+        #  _TEMP_accept_connection_types is already empty dict on init
         for key in keys:
+            print(f"{key=}, {connection_data.keys()=}")
             if key not in connection_data.keys():
                 connection_data[key] = {}
             connection_data = connection_data[key]
@@ -284,9 +293,13 @@ class NodeModel(object):
             connection_data[accept_ptype].add(accept_pname)
 
     def add_port_reject_connection_type(
-        self,
-        port_name, port_type, node_type,
-        reject_pname, reject_ptype, reject_ntype
+            self,
+            port_name,
+            port_type,
+            node_type,
+            reject_pname,
+            reject_ptype,
+            reject_ntype,
     ):
         """
         Convenience function for adding to the "reject_connection_types" dict.
@@ -297,23 +310,23 @@ class NodeModel(object):
             port_name (str): current port name.
             port_type (str): current port type.
             node_type (str): current port node type.
-            reject_pname:
-            reject_ptype:
-            reject_ntype:
-
-        Returns:
-
+            reject_pname (str): port name to reject.
+            reject_ptype (str): port type reject.
+            reject_ntype (str): port node type to reject.
         """
         model = self._graph_model
         if model:
             model.add_port_reject_connection_type(
                 port_name, port_type, node_type,
-                reject_pname, reject_ptype, reject_ntype
+                reject_pname, reject_ptype, reject_ntype,
             )
             return
 
         connection_data = self._TEMP_reject_connection_types
         keys = [node_type, port_type, port_name, reject_ntype]
+        # TODO: This is a very weird for loop condition aka for context, this
+        #  always result in connection_data becoming empty dict since the original
+        #  _TEMP_reject_connection_types is already empty dict on init
         for key in keys:
             if key not in connection_data.keys():
                 connection_data[key] = {}
@@ -528,8 +541,12 @@ class NodeGraphModel(object):
 
     def add_port_accept_connection_type(
             self,
-            port_name, port_type, node_type,
-            accept_pname, accept_ptype, accept_ntype
+            port_name,
+            port_type,
+            node_type,
+            accept_pname,
+            accept_ptype,
+            accept_ntype,
     ):
         """
         Convenience function for adding to the "accept_connection_types" dict.
@@ -540,10 +557,11 @@ class NodeGraphModel(object):
             node_type (str): current port node type.
             accept_pname (str):port name to accept.
             accept_ptype (str): port type accept.
-            accept_ntype (str):port node type to accept.
+            accept_ntype (str): port node type to accept.
         """
         connection_data = self.accept_connection_types
         keys = [node_type, port_type, port_name, accept_ntype]
+        # TODO: This is a very weird for loop condition
         for key in keys:
             if key not in connection_data.keys():
                 connection_data[key] = {}
@@ -573,8 +591,12 @@ class NodeGraphModel(object):
 
     def add_port_reject_connection_type(
             self,
-            port_name, port_type, node_type,
-            reject_pname, reject_ptype, reject_ntype
+            port_name,
+            port_type,
+            node_type,
+            reject_pname,
+            reject_ptype,
+            reject_ntype,
     ):
         """
         Convenience function for adding to the "reject_connection_types" dict.
@@ -589,6 +611,7 @@ class NodeGraphModel(object):
         """
         connection_data = self.reject_connection_types
         keys = [node_type, port_type, port_name, reject_ntype]
+        # TODO: The same very weird for loop condition
         for key in keys:
             if key not in connection_data.keys():
                 connection_data[key] = {}

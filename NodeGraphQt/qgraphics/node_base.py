@@ -29,7 +29,7 @@ class NodeItem(AbstractNodeItem):
     """
 
     def __init__(self, name='node', parent=None):
-        super(NodeItem, self).__init__(name, parent)
+        super().__init__(name, parent)
         pixmap = QtGui.QPixmap(ICON_NODE_BASE)
         if pixmap.size().height() > NodeEnum.ICON_SIZE.value:
             pixmap = pixmap.scaledToHeight(
@@ -914,8 +914,14 @@ class NodeItem(AbstractNodeItem):
             self.post_init()
         return port
 
-    def add_input(self, name='input', multi_port=False, display_name=True,
-                  locked=False, painter_func=None):
+    def add_input(
+            self,
+            name='input',
+            multi_port=False,
+            display_name=True,
+            locked=False,
+            painter_func=None,
+    ):
         """
         Adds a port qgraphics item into the node with the "port_type" set as
         IN_PORT.

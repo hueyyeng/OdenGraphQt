@@ -1,10 +1,19 @@
-#!/usr/bin/python
-from qtpy import QtGui, QtCore, QtWidgets
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Literal
+
+
+if TYPE_CHECKING:
+    from NodeGraphQt.qgraphics.node_base import NodeItem
+
+from qtpy import QtCore, QtGui, QtWidgets
 
 from NodeGraphQt.constants import (
-    PortTypeEnum, PortEnum,
+    ITEM_CACHE_MODE,
+    PortEnum,
+    PortTypeEnum,
     Z_VAL_PORT,
-    ITEM_CACHE_MODE)
+)
 
 
 class PortItem(QtWidgets.QGraphicsItem):
@@ -13,7 +22,7 @@ class PortItem(QtWidgets.QGraphicsItem):
     """
 
     def __init__(self, parent=None):
-        super(PortItem, self).__init__(parent)
+        super().__init__(parent)
         self.setAcceptHoverEvents(True)
         self.setCacheMode(ITEM_CACHE_MODE)
         self.setFlag(self.GraphicsItemFlag.ItemIsSelectable, False)
@@ -31,6 +40,74 @@ class PortItem(QtWidgets.QGraphicsItem):
         self._port_type = None
         self._multi_connection = False
         self._locked = False
+        self._accept_constraint = {}
+        self._reject_constraint = {}
+
+    def set_accept_constraint(
+            self,
+            port_name: str,
+            port_type: Literal["in", "out"],
+            node_identifier: str,
+    ):
+        if node_identifier not in self._accept_constraint:
+            self._accept_constraint[node_identifier] = []
+
+        data = {
+            "port_name": port_name,
+            "port_type": port_type,
+        }
+        self._accept_constraint[node_identifier].append(data)
+
+    def validate_accept_constraint(self, target_port: PortItem) -> bool | None:
+        if not self._accept_constraint:
+            return None
+
+        if target_port.node.identifier not in self._accept_constraint:
+            return False
+
+        is_valid = False
+        constraints: list[dict] = self._accept_constraint[target_port.node.identifier]
+        for constraint in constraints:
+            is_same_name = target_port.name == constraint["port_name"]
+            is_same_type = target_port.port_type == constraint["port_type"]
+            if is_same_name and is_same_type:
+                is_valid = True
+                break
+
+        return is_valid
+
+    def set_reject_constraint(
+            self,
+            port_name: str,
+            port_type: Literal["in", "out"],
+            node_identifier: str,
+    ):
+        if node_identifier not in self._reject_constraint:
+            self._reject_constraint[node_identifier] = []
+
+        data = {
+            "port_name": port_name,
+            "port_type": port_type,
+        }
+        self._reject_constraint[node_identifier].append(data)
+
+    def validate_reject_constraint(self, target_port: PortItem) -> bool | None:
+        if not self._reject_constraint:
+            return None
+
+        if target_port.node.identifier not in self._reject_constraint:
+            return False
+
+        is_valid = False
+        constraints: list[dict] = self._reject_constraint[target_port.node.identifier]
+        for constraint in constraints:
+            is_same_name = target_port.name == constraint["port_name"]
+            is_same_type = target_port.port_type == constraint["port_type"]
+            if is_same_name and is_same_type:
+                is_valid = True
+                break
+
+        return is_valid
 
     def __str__(self):
         return '{}.PortItem("{}")'.format(self.__module__, self.name)
@@ -175,7 +252,7 @@ class PortItem(QtWidgets.QGraphicsItem):
         self._hovered = value
 
     @property
-    def node(self):
+    def node(self) -> NodeItem:
         return self.parentItem()
 
     @property

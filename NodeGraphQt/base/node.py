@@ -1,4 +1,11 @@
-#!/usr/bin/python
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from NodeGraphQt.qgraphics.node_abstract import AbstractNodeItem
+    from NodeGraphQt.qgraphics.node_base import NodeItem
+
 from NodeGraphQt.base.commands import PropertyChangedCmd
 from NodeGraphQt.base.model import NodeModel
 from NodeGraphQt.constants import NodePropWidgetEnum
@@ -90,7 +97,8 @@ class NodeObject(object):
                 'No qgraphics item specified for the node object!'
             )
 
-        self._view = _NodeItem()
+        self._view: AbstractNodeItem = _NodeItem()
+        self._view.identifier = self.__identifier__
         self._view.type_ = self.type_
         self._view.name = self.model.name
         self._view.id = self._model.id
@@ -132,7 +140,7 @@ class NodeObject(object):
         return self._graph
 
     @property
-    def view(self):
+    def view(self) -> AbstractNodeItem | NodeItem:
         """
         Returns the :class:`QtWidgets.QGraphicsItem` used in the scene.
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import math
 from distutils.version import LooseVersion
 from typing import Literal
@@ -84,7 +86,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
         self._pipe_layout = PipeLayoutEnum.CURVED.value
         self._detached_port = None
-        self._start_port = None
+        self._start_port: PortItem | None = None
         self._origin_pos = None
         self._previous_pos = QtCore.QPoint(
             int(self.width() / 2),
@@ -844,6 +846,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
             if not isinstance(item, PortItem):
                 continue
 
+            item: PortItem
             x = item.boundingRect().width() / 2
             y = item.boundingRect().height() / 2
             pos = item.scenePos()
@@ -851,11 +854,18 @@ class NodeViewer(QtWidgets.QGraphicsView):
             pos.setY(pos.y() + y)
             if item == self._start_port:
                 break
+
             pointer_color = PipeEnum.HIGHLIGHT_COLOR.value
+            accept_constraint = self._start_port.validate_accept_constraint(item)
+            if not accept_constraint:
+                pointer_color = [255, 60, 150]
+                break
+
             accept = self._validate_accept_connection(self._start_port, item)
             if not accept:
                 pointer_color = [150, 60, 255]
                 break
+
             reject = self._validate_reject_connection(self._start_port, item)
             if reject:
                 pointer_color = [150, 60, 255]
@@ -973,7 +983,35 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
     # --- port connections ---
 
-    def _validate_accept_connection(self, from_port, to_port):
+    def _validate_accept_constraint(self, from_port: PortItem, to_port: PortItem) -> bool | None:
+        is_valid_from = from_port.validate_accept_constraint(to_port)
+        is_valid_to = to_port.validate_accept_constraint(from_port)
+        if is_valid_from is None and is_valid_to is None:
+            return None
+
+        result = any(
+            [
+                is_valid_from,
+                is_valid_to,
+            ]
+        )
+        return result
+
+    def _validate_reject_constraint(self, from_port: PortItem, to_port: PortItem) -> bool | None:
+        is_valid_from = from_port.validate_reject_constraint(to_port)
+        is_valid_to = to_port.validate_reject_constraint(from_port)
+        if is_valid_from is None and is_valid_to is None:
+            return None
+
+        result = any(
+            [
+                is_valid_from,
+                is_valid_to,
+            ]
+        )
+        return result
+
+    def _validate_accept_connection(self, from_port: PortItem, to_port: PortItem) -> bool:
         """
         Check if a pipe connection is allowed if there are a constraints set
         on the ports.
@@ -992,22 +1030,22 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
         # validate the start.
         from_data = self.accept_connection_types.get(from_port.node.type_) or {}
-        constraints = from_data.get(from_ptype, {}).get(from_port.name, {})
-        accept_data = constraints.get(to_port.node.type_, {})
-        accepted_pnames = accept_data.get(to_ptype, {})
-        if constraints:
-            if to_port.name in accepted_pnames:
+        from_constraints = from_data.get(from_ptype, {}).get(from_port.name, {})
+        from_accept_data = from_constraints.get(to_port.node.type_, {})
+        from_accepted_pnames = from_accept_data.get(to_ptype, {})
+        if from_constraints:
+            if to_port.name in from_accepted_pnames:
                 accept_validation.append(True)
             else:
                 accept_validation.append(False)
 
         # validate the end.
         to_data = self.accept_connection_types.get(to_port.node.type_) or {}
-        constraints = to_data.get(to_ptype, {}).get(to_port.name, {})
-        accept_data = constraints.get(from_port.node.type_, {})
-        accepted_pnames = accept_data.get(from_ptype, {})
-        if constraints:
-            if from_port.name in accepted_pnames:
+        to_constraints = to_data.get(to_ptype, {}).get(to_port.name, {})
+        to_accept_data = to_constraints.get(from_port.node.type_, {})
+        to_accepted_pnames = to_accept_data.get(from_ptype, {})
+        if to_constraints:
+            if from_port.name in to_accepted_pnames:
                 accept_validation.append(True)
             else:
                 accept_validation.append(False)
@@ -1016,7 +1054,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
             return False
         return True
 
-    def _validate_reject_connection(self, from_port, to_port):
+    def _validate_reject_connection(self, from_port: PortItem, to_port: PortItem) -> bool:
         """
         Check if a pipe connection is NOT allowed if there are a constrains set
         on the ports.
@@ -1069,7 +1107,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
         self._start_port.hovered = False
 
         # find the end port.
-        end_port = None
+        end_port: PortItem | None = None
         for item in self.scene().items(event.scenePos()):
             if isinstance(item, PortItem):
                 end_port = item
@@ -1114,7 +1152,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
         )
 
         # restore connection check.
-        restore_connection = any([
+        is_revert_connection = any([
             # if the end port is locked.
             end_port.locked,
             # if same port type.
@@ -1130,8 +1168,14 @@ class NodeViewer(QtWidgets.QGraphicsView):
             # if a port has a reject port type constrain.
             reject_connection
         ])
-        if restore_connection:
+        if is_revert_connection:
             if self._detached_port:
+                # Example scenario on how this works
+                # 1. You have existing Port A connected to Port B
+                # 2. You decided to connect from Port B to... whatever ports
+                # 3. You changed your mind and decided to connect it back to Port A
+                # 4. ???
+                # 5. Profit I mean this logic here
                 to_port = self._detached_port or end_port
                 self.establish_connection(self._start_port, to_port)
                 self._detached_port = None
@@ -1156,10 +1200,26 @@ class NodeViewer(QtWidgets.QGraphicsView):
             self.end_live_connection()
             return
 
+        accept_constraint = self._validate_accept_constraint(
+            self._start_port, end_port
+        )
+        if accept_constraint is False:
+            self._detached_port = None
+            self.end_live_connection()
+            return
+
+        reject_constraint = self._validate_reject_constraint(
+            self._start_port, end_port
+        )
+        if reject_constraint is True:
+            self._detached_port = None
+            self.end_live_connection()
+            return
+
         # make connection.
         if not end_port.multi_connection and end_port.connected_ports:
-            dettached_end = end_port.connected_ports[0]
-            disconnected.append((end_port, dettached_end))
+            detached_end = end_port.connected_ports[0]
+            disconnected.append((end_port, detached_end))
 
         if self._detached_port:
             disconnected.append((self._start_port, self._detached_port))
@@ -1171,7 +1231,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
         self._detached_port = None
         self.end_live_connection()
 
-    def start_live_connection(self, selected_port):
+    def start_live_connection(self, selected_port: PortItem):
         """
         create new pipe for the connection.
         (show the live pipe visibility from the port following the cursor position)
@@ -1199,7 +1259,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
         self._LIVE_PIPE.shift_selected = False
         self._start_port = None
 
-    def establish_connection(self, start_port, end_port):
+    def establish_connection(self, start_port: PortItem, end_port: PortItem):
         """
         establish a new pipe connection.
         (adds a new pipe item to draw between 2 ports)
@@ -1214,7 +1274,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
             pipe.hide()
 
     @staticmethod
-    def acyclic_check(start_port, end_port):
+    def acyclic_check(start_port: PortItem, end_port: PortItem):
         """
         Validate the node connections so it doesn't loop itself.
 
