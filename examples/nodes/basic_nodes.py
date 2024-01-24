@@ -1,4 +1,4 @@
-from NodeGraphQt import BaseNode, BaseNodeCircle
+from OdenGraphQt import BaseNode, BaseNodeCircle
 
 
 class BasicNodeA(BaseNode):

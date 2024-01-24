@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from qtpy import QtCore, QtGui
 
-from NodeGraphQt import BaseNode
+from OdenGraphQt import BaseNode
 
 
 def draw_triangle_port(painter, rect, info):
