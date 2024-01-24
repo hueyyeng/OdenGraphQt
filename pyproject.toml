@@ -1,0 +1,50 @@
+[project]
+name = "OdenGraphQt"
+description = "Node graph framework for PySide6/PyQt6 that can be implemented and re-purposed into applications."
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE.md"}
+keywords = [
+    "python",
+    "library",
+    "qt",
+    "widgets",
+    "development",
+]
+authors = [
+    {name = "Huey Yeng"},
+    {name = "Johnny Chan"},
+]
+maintainers = [
+    {name = "Huey Yeng"}
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.8",
+]
+dynamic = [
+    "version",
+    "dependencies",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/hueyyeng/OdenGraphQt"
+"Bug Reports" = "https://github.com/hueyyeng/OdenGraphQt/issues"
+"Source" = "https://github.com/hueyyeng/OdenGraphQt"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = {attr = "OdenGraphQt.pkg_info.__version__"}
+dependencies = {file = "requirements.txt"}
+
+[tool.setuptools.packages.find]
+include = ["OdenGraphQt*"]
+namespaces = false
