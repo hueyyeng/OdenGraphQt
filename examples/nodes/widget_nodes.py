@@ -1,6 +1,6 @@
-from NodeGraphQt import BaseNode
-from NodeGraphQt.constants import NodePropWidgetEnum
-from NodeGraphQt.widgets.node_widgets import NodeLineEditValidatorCheckBox
+from OdenGraphQt import BaseNode
+from OdenGraphQt.constants import NodePropWidgetEnum
+from OdenGraphQt.widgets.node_widgets import NodeLineEditValidatorCheckBox
 
 
 class DropdownMenuNode(BaseNode):

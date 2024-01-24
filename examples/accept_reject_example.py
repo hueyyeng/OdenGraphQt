@@ -2,9 +2,9 @@ import signal
 
 from qtpy import QtWidgets
 
-from NodeGraphQt import BaseNode, NodeGraph
-from NodeGraphQt.constants import PortTypeEnum
-from NodeGraphQt.qgraphics.node_base import NodeItem
+from OdenGraphQt import BaseNode, NodeGraph
+from OdenGraphQt.constants import PortTypeEnum
+from OdenGraphQt.qgraphics.node_base import NodeItem
 
 
 class PublishWriteNodeItem(NodeItem):

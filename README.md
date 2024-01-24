@@ -1,53 +1,42 @@
+# OdenGraphQt
 
-# NodeGraphQt
+OdenGraphQt is a fork of jchanvfx [NodeGraphQt](https://github.com/jchanvfx/NodeGraphQt), a node graph UI framework
+for `PySide6` that can be implemented and re-purposed into applications.
 
-[![API Documentation](https://github.com/jchanvfx/NodeGraphQt/actions/workflows/sphinx_doc_build.yml/badge.svg)](https://github.com/jchanvfx/NodeGraphQt/actions/workflows/sphinx_doc_build.yml)
-[![PyPI Package](https://github.com/jchanvfx/NodeGraphQt/actions/workflows/pypi_publish.yml/badge.svg)](https://github.com/jchanvfx/NodeGraphQt/actions/workflows/pypi_publish.yml)
-![GitHub Repo stars](https://img.shields.io/github/stars/jchanvfx/NodeGraphQt?style=social)
+## Changes from NodeGraphQt
 
-<p align="center">
-    <a href="https://jchanvfx.github.io/NodeGraphQt" target="_blank">
-    <img src="https://raw.githubusercontent.com/jchanvfx/NodeGraphQt/main/docs/_images/logo.png" title="logo">
-    </a>
-</p>
-
-NodeGraphQt is a node graph UI framework for `PySide2` that can be implemented and re-purposed into 
-applications.
-
-<img src="https://raw.githubusercontent.com/jchanvfx/NodeGraphQt/main/docs/_images/screenshot.png" width="100%" title="NodeGraphQt">
+- **PySide6** compatibility (I have not tested PyQt6) courtesy of **jowr** and **rajkundu**
+- Alternative port accept/reject connection
+- Partial type hints for IDE type checker (e.g. PyCharm)
+- Minor code reformat, tweaks and comments for code readability
 
 ## Install
 
-NodeGraphQt is available on The Python Package Index (PyPI) [here](https://pypi.org/project/NodeGraphQt) so it can be installed with:
-```
-pip install NodeGraphQt
-```
-or you can download previous versions from the [releases](https://github.com/jchanvfx/NodeGraphQt/releases) page.
+For now, please install as editable package. I'll be publishing to PyPI after I'm done with a few rounds of sanity
+testing.
 
+I highly advise using virtual environment when developing any tools/applications.
+
+Assuming you're on Windows and using command prompt. Git Bash user please change the path to Unix style.
+
+1. Clone this repository (e.g. `D:\Repo\OdenGraphQt`)
+2. Navigate to the Python app code you wish to integrate OdenGraphQt (e.g. `D:\Tools\MyAwesomePipelineTool`)
+3. Run `pip install -e D:\Repo\OdenGraphQt`
+4. ???
+5. ~~Profit~~ You can start importing `OdenGraphQt` module in your Python app code.
 
 ## Documentation
 
-<a href="https://jchanvfx.github.io/NodeGraphQt" target="_blank">https://jchanvfx.github.io/NodeGraphQt</a>
+Please refer to jchanvfx excellent documentation at https://chantonic.com/NodeGraphQt/api/index.html
 
-See the [basic_example.py](/examples/basic_example.py) script to get started or check out the API example overview 
-<a href="https://jchanvfx.github.io/NodeGraphQt/api/examples/ex_overview.html#simple-example" target="_blank">here.</a>
+I'll update this section in the near future after re-configuring the `sphinx_doc_build.yml`.
 
-## Vertical Layout
+See the [basic_example.py](/examples/basic_example.py) script to get started
+or [accept_reject_example.py](/examples/accept_reject_example.py) for the alternative port accept/reject connection
+logic.
 
-https://jchanvfx.github.io/NodeGraphQt/api/examples/ex_pipe.html#layout-direction
+## Why Oden? なぜおでんなのか？
 
-<img src="https://raw.githubusercontent.com/jchanvfx/NodeGraphQt/main/docs/_images/vertical_layout.png" width="800" title="Vertical Layout">
+Oden is delicious. おでんはおいしいです。
 
-## Pipe Layout
-
-https://jchanvfx.github.io/NodeGraphQt/api/examples/ex_pipe.html#layout-styles
-
-<img src="https://raw.githubusercontent.com/jchanvfx/NodeGraphQt/main/docs/_images/pipe_layout_types.gif" width="600" title="Pipe Layout">
-
-## Custom Widgets
-
-https://jchanvfx.github.io/NodeGraphQt/api/custom_widgets.html
-
-<img src="https://raw.githubusercontent.com/jchanvfx/NodeGraphQt/main/docs/_images/prop_bin.png" width="600" title="Properties Bin">
-
-<img src="https://raw.githubusercontent.com/jchanvfx/NodeGraphQt/main/docs/_images/nodes_palette.png" width="450" title="Node Palette">
+Real answer: I need to have a different namespace and Node can be rearranged as Oden by shifting N to the back.

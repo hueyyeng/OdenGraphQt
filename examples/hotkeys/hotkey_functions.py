@@ -214,7 +214,7 @@ def curved_pipe(graph):
     """
     Set node graph pipes layout as curved.
     """
-    from NodeGraphQt.constants import PipeLayoutEnum
+    from OdenGraphQt.constants import PipeLayoutEnum
     graph.set_pipe_style(PipeLayoutEnum.CURVED.value)
 
 
@@ -222,7 +222,7 @@ def straight_pipe(graph):
     """
     Set node graph pipes layout as straight.
     """
-    from NodeGraphQt.constants import PipeLayoutEnum
+    from OdenGraphQt.constants import PipeLayoutEnum
     graph.set_pipe_style(PipeLayoutEnum.STRAIGHT.value)
 
 
@@ -230,7 +230,7 @@ def angle_pipe(graph):
     """
     Set node graph pipes layout as angled.
     """
-    from NodeGraphQt.constants import PipeLayoutEnum
+    from OdenGraphQt.constants import PipeLayoutEnum
     graph.set_pipe_style(PipeLayoutEnum.ANGLE.value)
 
 
@@ -238,7 +238,7 @@ def bg_grid_none(graph):
     """
     Turn off the background patterns.
     """
-    from NodeGraphQt.constants import ViewerEnum
+    from OdenGraphQt.constants import ViewerEnum
     graph.set_grid_mode(ViewerEnum.GRID_DISPLAY_NONE.value)
 
 
@@ -246,7 +246,7 @@ def bg_grid_dots(graph):
     """
     Set background node graph background with grid dots.
     """
-    from NodeGraphQt.constants import ViewerEnum
+    from OdenGraphQt.constants import ViewerEnum
     graph.set_grid_mode(ViewerEnum.GRID_DISPLAY_DOTS.value)
 
 
@@ -254,7 +254,7 @@ def bg_grid_lines(graph):
     """
     Set background node graph background with grid lines.
     """
-    from NodeGraphQt.constants import ViewerEnum
+    from OdenGraphQt.constants import ViewerEnum
     graph.set_grid_mode(ViewerEnum.GRID_DISPLAY_LINES.value)
 
 

@@ -1,4 +1,4 @@
-from NodeGraphQt import GroupNode
+from OdenGraphQt import GroupNode
 
 
 class MyGroupNode(GroupNode):

@@ -33,7 +33,7 @@ def get_source_files(root: str) -> Iterator[str]:
 
 if __name__ == "__main__":
     base_dir = get_base_dir()
-    for src_dir in ["examples", "NodeGraphQt"]:
+    for src_dir in ["examples", "OdenGraphQt"]:
         source_dir = os.path.join(base_dir, src_dir)
         for source_file in get_source_files(source_dir):
             logging.debug("Processing %s", source_file)
