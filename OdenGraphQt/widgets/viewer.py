@@ -1761,11 +1761,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
         # TODO: Review this part and make sure we do not break anything
         # import qtpy
-        # if qtpy.PYSIDE2:
-        #     from PySide6.QtWidgets import QOpenGLWidget
-        # elif qtpy.PYQT5:
-        #     from PyQt5.QtWidgets import QOpenGLWidget
-        # elif qtpy.PYSIDE6:
+        # if qtpy.PYSIDE6:
         #     from PySide6.QtOpenGLWidgets import QOpenGLWidget
         # elif qtpy.PYQT6:
         #     from PyQt6.QtOpenGLWidgets import QOpenGLWidget
