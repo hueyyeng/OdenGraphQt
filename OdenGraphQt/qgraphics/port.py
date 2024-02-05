@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
-
+from typing import TYPE_CHECKING, Literal, TypedDict
 
 if TYPE_CHECKING:
     from OdenGraphQt.qgraphics.node_base import NodeItem
@@ -14,6 +13,11 @@ from OdenGraphQt.constants import (
     PortTypeEnum,
     Z_VAL_PORT,
 )
+
+
+class TPortConstraint(TypedDict):
+    port_name: str
+    port_type: str
 
 
 class PortItem(QtWidgets.QGraphicsItem):
@@ -29,19 +33,26 @@ class PortItem(QtWidgets.QGraphicsItem):
         self.setFlag(self.GraphicsItemFlag.ItemSendsScenePositionChanges, True)
         self.setZValue(Z_VAL_PORT)
         self._pipes = []
-        self._width = PortEnum.SIZE.value
-        self._height = PortEnum.SIZE.value
-        self._hovered = False
-        self._name = 'port'
-        self._display_name = True
-        self._color = PortEnum.COLOR.value
-        self._border_color = PortEnum.BORDER_COLOR.value
-        self._border_size = 1
-        self._port_type = None
-        self._multi_connection = False
-        self._locked = False
-        self._accept_constraint = {}
-        self._reject_constraint = {}
+        self._width: float = PortEnum.SIZE.value
+        self._height: float = PortEnum.SIZE.value
+        self._hovered: bool = False
+        self._name: str = "port"
+        self._display_name: bool = True
+        self._color: tuple[int, int, int, int] = PortEnum.COLOR.value
+        self._border_color: tuple[int, int, int, int] = PortEnum.BORDER_COLOR.value
+        self._border_size: int = 1
+        self._port_type: Literal["in", "out"] | None = None
+        self._multi_connection: bool = False
+        self._locked: bool = False
+        self._accept_constraint: dict[str, list[TPortConstraint]] = {}
+        self._reject_constraint: dict[str, list[TPortConstraint]] = {}
+        self._allow_partial_match_constraint: bool = False
+
+    def set_allow_partial_match_constraint(self, allow: bool):
+        self._allow_partial_match_constraint = allow
+
+    def get_allow_partial_match_constraint(self):
+        return self._allow_partial_match_constraint
 
     def set_accept_constraint(
             self,
@@ -62,11 +73,21 @@ class PortItem(QtWidgets.QGraphicsItem):
         if not self._accept_constraint:
             return None
 
-        if target_port.node.identifier not in self._accept_constraint:
+        identifier: str | None = None
+        if self._allow_partial_match_constraint:
+            for k in self._accept_constraint.keys():
+                if target_port.node.identifier in k:
+                    identifier = k
+                    break
+        else:
+            if target_port.node.identifier in self._accept_constraint:
+                identifier = target_port.node.identifier
+
+        if not identifier:
             return False
 
         is_valid = False
-        constraints: list[dict] = self._accept_constraint[target_port.node.identifier]
+        constraints: list[dict] = self._accept_constraint[identifier]
         for constraint in constraints:
             is_same_name = target_port.name == constraint["port_name"]
             is_same_type = target_port.port_type == constraint["port_type"]
@@ -95,7 +116,17 @@ class PortItem(QtWidgets.QGraphicsItem):
         if not self._reject_constraint:
             return None
 
-        if target_port.node.identifier not in self._reject_constraint:
+        identifier: str | None = None
+        if self._allow_partial_match_constraint:
+            for k in self._reject_constraint.keys():
+                if target_port.node.identifier in k:
+                    identifier = k
+                    break
+        else:
+            if target_port.node.identifier in self._reject_constraint:
+                identifier = target_port.node.identifier
+
+        if not identifier:
             return False
 
         is_valid = False

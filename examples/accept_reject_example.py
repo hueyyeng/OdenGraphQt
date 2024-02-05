@@ -33,10 +33,23 @@ class PrevNextNode(BaseNode):
         super().__init__()
 
         # create an input port.
-        self.add_input("_prev", color=(180, 80, 0), multi_input=False)
-
+        input_port = self.add_input("_prev", color=(180, 80, 0), multi_input=False)
         # create an output port.
-        self.add_output("_next", multi_output=False)
+        output_port = self.add_output("_next", multi_output=False)
+
+        input_port.port_item.set_allow_partial_match_constraint(True)
+        input_port.port_item.set_accept_constraint(
+            port_name=output_port.name(),
+            port_type=PortTypeEnum.OUT.value,
+            node_identifier=self.__identifier__,
+        )
+
+        output_port.port_item.set_allow_partial_match_constraint(True)
+        output_port.port_item.set_accept_constraint(
+            port_name=input_port.name(),
+            port_type=PortTypeEnum.IN.value,
+            node_identifier=self.__identifier__,
+        )
 
 
 class IngredientNode(BaseNode):
@@ -104,6 +117,11 @@ class BasePublishNode(PrevNextNode):
         )
 
 
+class PubNode(PrevNextNode):
+    __identifier__ = "pub"
+    NODE_NAME = "Not Tavern"
+
+
 class PublishFileActionNode(BasePublishNode):
     NODE_NAME = "Publish File"
     allow_multiple_write = False
@@ -149,6 +167,7 @@ if __name__ == '__main__':
         SpamNode,
         EggNode,
         MealNode,
+        PubNode,
         PublishFileActionNode,
         PublishFileToManyActionNode,
         PublishWriteNode,
@@ -158,6 +177,7 @@ if __name__ == '__main__':
     graph.add_node(SpamNode())
     graph.add_node(EggNode())
     graph.add_node(MealNode())
+    graph.add_node(PubNode())
     graph.add_node(PublishFileToManyActionNode())
     graph.add_node(PublishFileActionNode())
     graph.add_node(PublishWriteNode())
