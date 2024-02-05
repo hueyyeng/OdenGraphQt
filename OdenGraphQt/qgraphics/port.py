@@ -69,16 +69,26 @@ class PortItem(QtWidgets.QGraphicsItem):
         }
         self._accept_constraint[node_identifier].append(data)
 
+    @staticmethod
+    def _partial_match_constraint_name(name: str, constraints: dict[str, list]) -> str | None:
+        result = None
+        for k in constraints.keys():
+            if name in k or k in name:
+                result = k
+                break
+
+        return result
+
     def validate_accept_constraint(self, target_port: PortItem) -> bool | None:
         if not self._accept_constraint:
             return None
 
         identifier: str | None = None
         if self._allow_partial_match_constraint:
-            for k in self._accept_constraint.keys():
-                if target_port.node.identifier in k:
-                    identifier = k
-                    break
+            identifier = self._partial_match_constraint_name(
+                target_port.node.identifier,
+                self._accept_constraint,
+            )
         else:
             if target_port.node.identifier in self._accept_constraint:
                 identifier = target_port.node.identifier
@@ -118,10 +128,10 @@ class PortItem(QtWidgets.QGraphicsItem):
 
         identifier: str | None = None
         if self._allow_partial_match_constraint:
-            for k in self._reject_constraint.keys():
-                if target_port.node.identifier in k:
-                    identifier = k
-                    break
+            identifier = self._partial_match_constraint_name(
+                target_port.node.identifier,
+                self._reject_constraint,
+            )
         else:
             if target_port.node.identifier in self._reject_constraint:
                 identifier = target_port.node.identifier
