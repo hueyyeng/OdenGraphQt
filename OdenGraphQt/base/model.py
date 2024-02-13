@@ -345,11 +345,16 @@ class NodeModel(object):
             dict: default node properties.
         """
         props = self.__dict__.copy()
-        exclude = ['_custom_prop',
-                   '_graph_model',
-                   '_TEMP_property_attrs',
-                   '_TEMP_property_widget_types']
-        [props.pop(i) for i in exclude if i in props.keys()]
+        exclude = [
+            "_custom_prop",
+            "_graph_model",
+            "_TEMP_property_attrs",
+            "_TEMP_property_widget_types"
+        ]
+        exclude_keys = [i for i in exclude if i in props.keys()]
+        for key in exclude_keys:
+            props.pop(key)
+
         return props
 
     @property
