@@ -5,33 +5,47 @@ import json
 import os
 import re
 
-from qtpy import QtCore, QtWidgets, QtGui
+from qtpy import QtCore, QtGui, QtWidgets
 
-from OdenGraphQt.base.commands import (NodeAddedCmd,
-                                       NodesRemovedCmd,
-                                       NodeMovedCmd,
-                                       PortConnectedCmd)
+from OdenGraphQt.base.commands import (
+    NodeAddedCmd,
+    NodeMovedCmd,
+    NodesRemovedCmd,
+    PortConnectedCmd,
+)
 from OdenGraphQt.base.factory import NodeFactory
 from OdenGraphQt.base.menu import NodeGraphMenu, NodesMenu
 from OdenGraphQt.base.model import NodeGraphModel
 from OdenGraphQt.base.node import NodeObject
 from OdenGraphQt.base.port import Port
 from OdenGraphQt.constants import (
-    URI_SCHEME,
-    URN_SCHEME,
     LayoutDirectionEnum,
+    MIME_TYPE,
     PipeLayoutEnum,
     PortTypeEnum,
-    ViewerEnum
+    URI_SCHEME,
+    URN_SCHEME,
+    ViewerEnum,
 )
-from OdenGraphQt.errors import NodeCreationError, NodeDeletionError
+from OdenGraphQt.errors import (
+    NodeCreationError,
+    NodeDeletionError,
+)
 from OdenGraphQt.nodes.backdrop_node import BackdropNode
 from OdenGraphQt.nodes.base_node import BaseNode
 from OdenGraphQt.nodes.group_node import GroupNode
-from OdenGraphQt.nodes.port_node import PortInputNode, PortOutputNode
-from OdenGraphQt.widgets.node_graph import NodeGraphWidget, SubGraphWidget
+from OdenGraphQt.nodes.port_node import (
+    PortInputNode,
+    PortOutputNode,
+)
+from OdenGraphQt.widgets.node_graph import (
+    NodeGraphWidget,
+    SubGraphWidget,
+)
 from OdenGraphQt.widgets.viewer import NodeViewer
-from OdenGraphQt.widgets.viewer_nav import NodeNavigationWidget
+from OdenGraphQt.widgets.viewer_nav import (
+    NodeNavigationWidget,
+)
 
 
 class NodeGraph(QtCore.QObject):
@@ -343,7 +357,7 @@ class NodeGraph(QtCore.QObject):
         unsel_nodes = [self.get_node_by_id(nid) for nid in desel_ids]
         self.node_selection_changed.emit(sel_nodes, unsel_nodes)
 
-    def _on_node_data_dropped(self, data, pos):
+    def _on_node_data_dropped(self, mimedata, pos):
         """
         called when data has been dropped on the viewer.
 
@@ -352,36 +366,51 @@ class NodeGraph(QtCore.QObject):
             URN = ngqt::node:com.nodes.MyNode1;node:com.nodes.MyNode2
 
         Args:
-            data (QtCore.QMimeData): mime data.
+            mimedata (QtCore.QMimeData): mime data.
             pos (QtCore.QPoint): scene position relative to the drop.
         """
         uri_regex = re.compile(r'{}(?:/*)([\w/]+)(\.\w+)'.format(URI_SCHEME))
         urn_regex = re.compile(r'{}([\w\.:;]+)'.format(URN_SCHEME))
-        if data.hasFormat('text/uri-list'):
-            for url in data.urls():
+        if mimedata.hasFormat(MIME_TYPE):
+            data = mimedata.data(MIME_TYPE).data().decode()
+            urn_search = urn_regex.search(data)
+            if urn_search:
+                search_str = urn_search.group(1)
+                node_ids = sorted(re.findall(r'node:([\w\.]+)', search_str))
+                x, y = pos.x(), pos.y()
+                for node_id in node_ids:
+                    self.create_node(node_id, pos=[x, y])
+                    x += 80
+                    y += 80
+        elif mimedata.hasFormat('text/uri-list'):
+            not_supported_urls = []
+            for url in mimedata.urls():
                 local_file = url.toLocalFile()
                 if local_file:
                     try:
                         self.import_session(local_file)
                         continue
                     except Exception as e:
-                        pass
+                        not_supported_urls.append(url)
 
                 url_str = url.toString()
-                uri_search = uri_regex.search(url_str)
-                urn_search = urn_regex.search(url_str)
-                if uri_search:
-                    path = uri_search.group(1)
-                    ext = uri_search.group(2)
-                    self.import_session('{}{}'.format(path, ext))
-                elif urn_search:
-                    search_str = urn_search.group(1)
-                    node_ids = sorted(re.findall('node:([\w\\.]+)', search_str))
-                    x, y = pos.x(), pos.y()
-                    for node_id in node_ids:
-                        self.create_node(node_id, pos=[x, y])
-                        x += 80
-                        y += 80
+                if url_str:
+                    uri_search = uri_regex.search(url_str)
+                    if uri_search:
+                        path = uri_search.group(1)
+                        ext = uri_search.group(2)
+                        try:
+                            self.import_session('{}{}'.format(path, ext))
+                        except Exception as e:
+                            not_supported_urls.append(url)
+
+            if not_supported_urls:
+                not_supported_urls_ = "\n".join(not_supported_urls)
+                print(f"Can't import the following urls:\n{not_supported_urls_}")
+                self.data_dropped.emit(mimedata, pos)
+
+        else:
+            self.data_dropped.emit(mimedata, pos)
 
     def _on_nodes_moved(self, node_data):
         """
@@ -642,7 +671,7 @@ class NodeGraph(QtCore.QObject):
             :linenos:
 
             graph = NodeGraph()
-            graph.set_grid_mode(ViewerEnum.CURVED.value)
+            graph.set_grid_mode(ViewerEnum.GRID_DISPLAY_DOTS.value)
 
         Args:
             mode (int): background style.
@@ -654,6 +683,7 @@ class NodeGraph(QtCore.QObject):
         ]
         if mode not in display_types:
             mode = ViewerEnum.GRID_DISPLAY_LINES.value
+
         self.scene().grid_mode = mode
         self._viewer.force_update()
 
@@ -768,8 +798,8 @@ class NodeGraph(QtCore.QObject):
         if not menu:
             raise ValueError('No context menu named: "{}"'.format(menu))
 
-        import sys
         import importlib.util
+        import sys
 
         nodes_menu = self.get_context_menu('nodes')
 

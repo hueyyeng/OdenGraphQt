@@ -1,7 +1,7 @@
 #!/usr/bin/python
 from qtpy import QtGui, QtCore, QtWidgets
 
-from OdenGraphQt.constants import Z_VAL_PIPE, NodeEnum
+from OdenGraphQt.constants import NodeEnum, Z_VAL_BACKDROP
 from OdenGraphQt.qgraphics.node_abstract import AbstractNodeItem
 from OdenGraphQt.qgraphics.pipe import PipeItem
 from OdenGraphQt.qgraphics.port import PortItem
@@ -111,10 +111,10 @@ class BackdropNodeItem(AbstractNodeItem):
         parent (QtWidgets.QGraphicsItem): parent item.
     """
 
-    def __init__(self, name='backdrop', text='', parent=None):
-        super(BackdropNodeItem, self).__init__(name, parent)
-        self.setZValue(Z_VAL_PIPE - 1)
-        self._properties['backdrop_text'] = text
+    def __init__(self, name="backdrop", text='', parent=None):
+        super().__init__(name, parent)
+        self.setZValue(Z_VAL_BACKDROP)
+        self._properties["backdrop_text"] = text
         self._min_size = 80, 80
         self._sizer = BackdropSizer(self, 26.0)
         self._sizer.set_pos(*self._min_size)

@@ -61,7 +61,7 @@ class NodeViewer(QtWidgets.QGraphicsView):
             undo_stack (QtGui.QUndoStack): undo stack from the parent
                                                graph controller.
         """
-        super(NodeViewer, self).__init__(parent)
+        super().__init__(parent)
 
         self.setScene(NodeScene(self))
         self.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing, True)
@@ -74,6 +74,12 @@ class NodeViewer(QtWidgets.QGraphicsView):
 
         self.setAcceptDrops(True)
         self.resize(850, 800)
+
+        self._accepted_mimes = [
+            "OdenGraphQt/nodes",
+            "text/plain",
+            "text/uri-list",
+        ]
 
         self._scene_range = QtCore.QRectF(
             0, 0,
@@ -747,16 +753,25 @@ class NodeViewer(QtWidgets.QGraphicsView):
         pos = self.mapToScene(event.pos())
         event.setDropAction(QtCore.Qt.DropAction.CopyAction)
         self.data_dropped.emit(
-            event.mimeData(), QtCore.QPoint(pos.x(), pos.y()))
+            event.mimeData(), QtCore.QPoint(pos.x(), pos.y())
+        )
 
     def dragEnterEvent(self, event):
-        if event.mimeData().hasFormat('text/uri-list'):
+        is_acceptable = any([
+            event.mimeData().hasFormat(i) for i in
+            self._accepted_mimes
+        ])
+        if is_acceptable:
             event.accept()
         else:
             event.ignore()
 
     def dragMoveEvent(self, event):
-        if event.mimeData().hasFormat('text/uri-list'):
+        is_acceptable = any([
+            event.mimeData().hasFormat(i) for i in
+            self._accepted_mimes
+        ])
+        if is_acceptable:
             event.accept()
         else:
             event.ignore()

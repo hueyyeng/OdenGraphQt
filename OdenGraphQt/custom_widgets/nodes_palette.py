@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 from collections import defaultdict
 
-from qtpy import QtWidgets, QtCore, QtGui
+from qtpy import QtCore, QtGui, QtWidgets
 
-from OdenGraphQt.constants import URN_SCHEME
+from OdenGraphQt.constants import MIME_TYPE, URN_SCHEME
 
 
 class NodesGridDelagate(QtWidgets.QStyledItemDelegate):
@@ -128,11 +128,13 @@ class NodesGridProxyModel(QtCore.QSortFilterProxyModel):
         super(NodesGridProxyModel, self).__init__(parent)
         
     def mimeData(self, indexes):
-        node_ids = ['node:{}'.format(i.data(QtCore.Qt.ItemDataRole.ToolTipRole))
-                    for i in indexes]
+        node_ids = [
+            "node:{}".format(i.data(QtCore.Qt.ItemDataRole.ToolTipRole))
+            for i in indexes
+        ]
         node_urn = URN_SCHEME + ';'.join(node_ids)
-        mime_data = super(NodesGridProxyModel, self).mimeData(indexes)
-        mime_data.setUrls([node_urn])
+        mime_data = QtCore.QMimeData()
+        mime_data.setData(MIME_TYPE, QtCore.QByteArray(node_urn.encode()))
         return mime_data
 
 
