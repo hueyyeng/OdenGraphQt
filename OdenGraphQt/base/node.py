@@ -211,10 +211,7 @@ class NodeObject(object):
         Update the node view from model.
         """
         settings = self.model.to_dict[self.model.id]
-        settings['id'] = self.model.id
-        if settings.get('custom'):
-            settings['widgets'] = settings.pop('custom')
-
+        settings["id"] = self.model.id
         self.view.from_dict(settings)
 
     def serialize(self):

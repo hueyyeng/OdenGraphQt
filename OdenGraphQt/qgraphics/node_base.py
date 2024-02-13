@@ -47,7 +47,7 @@ class NodeItem(AbstractNodeItem):
         self._proxy_mode = False
         self._proxy_mode_threshold = 70
 
-    def post_init(self, viewer, pos=None):
+    def post_init(self, viewer=None, pos=None):
         """
         Called after node has been added into the scene.
 
@@ -717,6 +717,9 @@ class NodeItem(AbstractNodeItem):
         else:
             raise RuntimeError('Node graph layout direction not valid!')
 
+    # FIXME: Hmm redeclare of post_init above but commit date is 2019... while
+    #  the above is from 2022... as of 2024-02-13, this is still on the main branch
+    #  of NodeGraphQt so will leave this first
     def post_init(self, viewer=None, pos=None):
         """
         Called after node has been added into the scene.
@@ -1053,8 +1056,9 @@ class NodeItem(AbstractNodeItem):
         return name in self._widgets.keys()
 
     def from_dict(self, node_dict):
-        super(NodeItem, self).from_dict(node_dict)
-        widgets = node_dict.pop('widgets', {})
-        for name, value in widgets.items():
-            if self._widgets.get(name):
-                self._widgets[name].set_value(value)
+        super().from_dict(node_dict)
+        custom_prop = node_dict.get("custom") or {}
+        for prop_name, value in custom_prop.items():
+            prop_widget = self._widgets.get(prop_name)
+            if prop_widget:
+                prop_widget.set_value(value)
