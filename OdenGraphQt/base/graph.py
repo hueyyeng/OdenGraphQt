@@ -8,7 +8,7 @@ import re
 from qtpy import QtCore, QtWidgets, QtGui
 
 from OdenGraphQt.base.commands import (NodeAddedCmd,
-                                       NodeRemovedCmd,
+                                       NodesRemovedCmd,
                                        NodeMovedCmd,
                                        PortConnectedCmd)
 from OdenGraphQt.base.factory import NodeFactory
@@ -144,9 +144,11 @@ class NodeGraph(QtCore.QObject):
         super(NodeGraph, self).__init__(parent)
         self.setObjectName('NodeGraph')
         self._model = (
-            kwargs.get('model') or NodeGraphModel())
+            kwargs.get('model') or NodeGraphModel()
+        )
         self._node_factory = (
-            kwargs.get('node_factory') or NodeFactory())
+            kwargs.get('node_factory') or NodeFactory()
+        )
         self._undo_view = None
         self._undo_stack = (
             kwargs.get('undo_stack') or QtGui.QUndoStack(self)
@@ -1255,7 +1257,9 @@ class NodeGraph(QtCore.QObject):
 
             node.update()
 
-            undo_cmd = NodeAddedCmd(self, node, node.model.pos)
+            undo_cmd = NodeAddedCmd(
+                self, node, pos=node.model.pos, emit_signal=True
+            )
             if push_undo:
                 undo_label = 'create node: "{}"'.format(node.NODE_NAME)
                 self._undo_stack.beginMacro(undo_label)
@@ -1266,11 +1270,11 @@ class NodeGraph(QtCore.QObject):
             else:
                 for n in self.selected_nodes():
                     n.set_property('selected', False, push_undo=False)
-                NodeAddedCmd(self, node, node.model.pos).redo()
+                undo_cmd.redo()
 
-            self.node_created.emit(node)
             return node
-        raise NodeCreationError('Can\'t find node: "{}"'.format(node_type))
+
+        raise NodeCreationError(f"Can't find node: {node_type}")
 
     def add_node(self, node, pos=None, selected=True, push_undo=True):
         """
@@ -1341,14 +1345,15 @@ class NodeGraph(QtCore.QObject):
         # update method must be called before it's been added to the viewer.
         node.update()
 
+        undo_cmd = NodeAddedCmd(self, node, pos=pos, emit_signal=False)
         if push_undo:
             self._undo_stack.beginMacro('add node: "{}"'.format(node.name()))
-            self._undo_stack.push(NodeAddedCmd(self, node, pos))
+            self._undo_stack.push(undo_cmd)
             if selected:
                 node.set_selected(True)
             self._undo_stack.endMacro()
         else:
-            NodeAddedCmd(self, node, pos).redo()
+            undo_cmd.redo()
 
     def delete_node(self, node, push_undo=True):
         """
@@ -1382,13 +1387,12 @@ class NodeGraph(QtCore.QObject):
         if isinstance(node, GroupNode) and node.is_expanded:
             node.collapse()
 
+        undo_cmd = NodesRemovedCmd(self, [node], emit_signal=True)
         if push_undo:
-            self._undo_stack.push(NodeRemovedCmd(self, node))
+            self._undo_stack.push(undo_cmd)
             self._undo_stack.endMacro()
         else:
-            NodeRemovedCmd(self, node).redo()
-
-        self.nodes_deleted.emit([node_id])
+            undo_cmd.redo()
 
     def remove_node(self, node, push_undo=True):
         """
@@ -1425,11 +1429,12 @@ class NodeGraph(QtCore.QObject):
                                  push_undo=push_undo)
                 p.clear_connections(push_undo=push_undo)
 
+        undo_cmd = NodesRemovedCmd(self, [node], emit_signal=False)
         if push_undo:
-            self._undo_stack.push(NodeRemovedCmd(self, node))
+            self._undo_stack.push(undo_cmd)
             self._undo_stack.endMacro()
         else:
-            NodeRemovedCmd(self, node).redo()
+            undo_cmd.redo()
 
     def delete_nodes(self, nodes, push_undo=True):
         """
@@ -1449,8 +1454,8 @@ class NodeGraph(QtCore.QObject):
             self._undo_stack.beginMacro(
                 'deleted "{}" node(s)'.format(len(nodes))
             )
-        for node in nodes:
 
+        for node in nodes:
             # collapse group node before removing.
             if isinstance(node, GroupNode) and node.is_expanded:
                 node.collapse()
@@ -1468,12 +1473,14 @@ class NodeGraph(QtCore.QObject):
                                      connected_ports=False,
                                      push_undo=push_undo)
                     p.clear_connections(push_undo=push_undo)
-            if push_undo:
-                self._undo_stack.push(NodeRemovedCmd(self, node))
-            else:
-                NodeRemovedCmd(self, node).redo()
+
+        undo_cmd = NodesRemovedCmd(self, nodes, emit_signal=True)
         if push_undo:
+            self._undo_stack.push(undo_cmd)
             self._undo_stack.endMacro()
+        else:
+            undo_cmd.redo()
+
         self.nodes_deleted.emit(node_ids)
 
     def extract_nodes(self, nodes, push_undo=True, prompt_warning=True):
@@ -1655,19 +1662,22 @@ class NodeGraph(QtCore.QObject):
         """
         Clears the current node graph session.
         """
-        for n in self.all_nodes():
+        nodes = self.all_nodes()
+        for n in nodes:
             if isinstance(n, BaseNode):
                 for p in n.input_ports():
                     if p.locked():
                         p.set_locked(False, connected_ports=False)
                     p.clear_connections()
+
                 for p in n.output_ports():
                     if p.locked():
                         p.set_locked(False, connected_ports=False)
                     p.clear_connections()
-            self._undo_stack.push(NodeRemovedCmd(self, n))
+
+        self._undo_stack.push(NodesRemovedCmd(self, nodes))
         self._undo_stack.clear()
-        self._model.session = ''
+        self._model.session = ""
 
     def _serialize(self, nodes):
         """
@@ -1811,12 +1821,19 @@ class NodeGraph(QtCore.QObject):
                 # only connect if input port is not connected yet or input port
                 # can have multiple connections.
                 # important when duplicating nodes.
-                allow_connection = any([not in_port.model.connected_ports,
-                                        in_port.model.multi_connection])
+                allow_connection = any(
+                    [
+                        not in_port.model.connected_ports,
+                        in_port.model.multi_connection,
+                    ]
+                )
                 if allow_connection:
-                    self._undo_stack.push(PortConnectedCmd(in_port, out_port))
+                    self._undo_stack.push(
+                        PortConnectedCmd(in_port, out_port, emit_signal=False)
+                    )
 
-                # Run on_input_connected to ensure connections are fully set up after deserialization.
+                # Run on_input_connected to ensure connections are fully set up
+                # after deserialization.
                 in_node.on_input_connected(in_port, out_port)
 
         node_objs = nodes.values()
@@ -1995,8 +2012,7 @@ class NodeGraph(QtCore.QObject):
             if isinstance(node, GroupNode) and node.is_expanded:
                 node.collapse()
 
-            self._undo_stack.push(NodeRemovedCmd(self, node))
-
+        self._undo_stack.push(NodesRemovedCmd(self, nodes))
         self._undo_stack.endMacro()
 
     def paste_nodes(self):
@@ -2014,11 +2030,10 @@ class NodeGraph(QtCore.QObject):
         try:
             serial_data = json.loads(cb_text)
         except json.decoder.JSONDecodeError as e:
-            print('ERROR: Can\'t Decode Clipboard Data:\n'
-                  '"{}"'.format(cb_text))
+            print(f"ERROR: Can't Decode Clipboard Data: {cb_text}")
             return
 
-        self._undo_stack.beginMacro('pasted nodes')
+        self._undo_stack.beginMacro("pasted nodes")
         self.clear_selection()
         nodes = self._deserialize(serial_data, relative_pos=True)
         [n.set_selected(True) for n in nodes]
@@ -2653,15 +2668,20 @@ class SubGraph(NodeGraph):
             out_port = out_node.outputs().get(pname) if out_node else None
 
             if in_port and out_port:
-                self._undo_stack.push(PortConnectedCmd(in_port, out_port))
+                self._undo_stack.push(
+                    PortConnectedCmd(in_port, out_port, emit_signal=False)
+                )
+
+        pos_ = None
+        if relative_pos:
+            pos_ = None
+        elif pos:
+            pos_ = pos
 
         node_objs = list(nodes.values())
-        if relative_pos:
-            self._viewer.move_nodes([n.view for n in node_objs])
-            [setattr(n.model, 'pos', n.view.xy_pos) for n in node_objs]
-        elif pos:
-            self._viewer.move_nodes([n.view for n in node_objs], pos=pos)
-            [setattr(n.model, 'pos', n.view.xy_pos) for n in node_objs]
+        self._viewer.move_nodes([n.view for n in node_objs], pos=pos_)
+        for n in node_objs:
+            setattr(n.model, "pos", n.view.xy_pos)
 
         return node_objs
 
