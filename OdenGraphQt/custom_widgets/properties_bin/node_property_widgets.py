@@ -307,13 +307,13 @@ class _PortConnectionsContainer(QtWidgets.QWidget):
             chb_widget.setDisabled(disable)
 
 
-class NodePropWidget(QtWidgets.QWidget):
+class NodePropEditorWidget(QtWidgets.QWidget):
     """
-    Node properties widget for display a Node object.
+    Node properties editor widget for display a Node object.
 
     Args:
         parent (QtWidgets.QWidget): parent object.
-        node (OdenGraphQt.BaseNode): node.
+        node (OdenGraphQt.NodeObject): node.
     """
 
     #: signal (node_id, prop_name, prop_value)
@@ -321,7 +321,7 @@ class NodePropWidget(QtWidgets.QWidget):
     property_closed = QtCore.Signal(str)
 
     def __init__(self, parent=None, node=None):
-        super(NodePropWidget, self).__init__(parent)
+        super().__init__(parent)
         self.__node_id = node.id
         self.__tab_windows = {}
         self.__tab = QtWidgets.QTabWidget()
@@ -542,7 +542,16 @@ class NodePropWidget(QtWidgets.QWidget):
         self.__tab.addTab(self.__tab_windows[name], name)
         return self.__tab_windows[name]
 
-    def get_widget(self, name):
+    def get_tab_widget(self):
+        """
+        Returns the underlying tab widget.
+
+        Returns:
+            QtWidgets.QTabWidget: tab widget.
+        """
+        return self.__tab
+
+    def get_widget(self, name: str):
         """
         get property widget.
 
@@ -746,6 +755,20 @@ class PropertiesBinWidget(QtWidgets.QWidget):
         if not self._block_signal:
             self.property_changed.emit(node_id, prop_name, prop_value)
 
+    def create_property_editor(self, node):
+        """
+        Creates a new property editor widget from the provided node.
+
+
+        (re-implement for displaying custom node property editor widget.)
+        Args:
+            node (NodeGraphQt.NodeObject): node object.
+
+        Returns:
+            NodePropEditorWidget: property editor widget.
+        """
+        return NodePropEditorWidget(node=node)
+
     def limit(self):
         """
         Returns the limit for how many nodes can be loaded into the bin.
@@ -784,7 +807,7 @@ class PropertiesBinWidget(QtWidgets.QWidget):
 
         self._prop_list.insertRow(0)
 
-        prop_widget = NodePropWidget(node=node)
+        prop_widget = self.create_property_editor(node=node)
         prop_widget.property_closed.connect(self.__on_prop_close)
         prop_widget.property_changed.connect(self.__on_property_widget_changed)
         if not isinstance(node, BackdropNode):
@@ -840,7 +863,7 @@ class PropertiesBinWidget(QtWidgets.QWidget):
             node (str or OdenGraphQt.NodeObject): node id or node object.
 
         Returns:
-            NodePropWidget: node property widget.
+            NodePropEditorWidget: node property widget.
         """
         node_id = node if isinstance(node, str) else node.id
         itm_find = self._prop_list.findItems(node_id, QtCore.Qt.MatchFlag.MatchExactly)
