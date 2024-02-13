@@ -282,7 +282,6 @@ class NodeModel(object):
         #  always result in connection_data becoming empty dict since the original
         #  _TEMP_accept_connection_types is already empty dict on init
         for key in keys:
-            print(f"{key=}, {connection_data.keys()=}")
             if key not in connection_data.keys():
                 connection_data[key] = {}
             connection_data = connection_data[key]

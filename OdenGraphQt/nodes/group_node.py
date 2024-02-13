@@ -149,7 +149,7 @@ class GroupNode(BaseNode):
 
     def delete_input(self, port):
         if type(port) in [int, str]:
-            port = self.get_output(port)
+            port = self.get_input(port)
             if port is None:
                 return
 
@@ -159,7 +159,7 @@ class GroupNode(BaseNode):
             if port_node:
                 sub_graph.remove_node(port_node, push_undo=False)
 
-        super(GroupNode, self).delete_input(port)
+        super().delete_input(port)
 
     def delete_output(self, port):
         if type(port) in [int, str]:
@@ -173,4 +173,4 @@ class GroupNode(BaseNode):
             if port_node:
                 sub_graph.remove_node(port_node, push_undo=False)
 
-        super(GroupNode, self).delete_output(port)
+        super().delete_output(port)
