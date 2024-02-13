@@ -119,8 +119,12 @@ class NodeGraphMenu(object):
             if search:
                 shortcut = getattr(QtGui.QKeySequence, search.group(1))
             elif all([i in ["Alt", "Enter"] for i in shortcut.split("+")]):
+                # For devs who still using PySide2, take note of this deprecation warning
+                # PySideDeprecationWarningRemovedInQt6:
+                # The "+" operator is deprecated in Qt For Python 6.0 . Please use "|" instead.
+                #   QtCore.Qt.ALT + QtCore.Qt.Key_Return
                 shortcut = QtGui.QKeySequence(
-                    QtCore.Qt.ALT + QtCore.Qt.Key_Return
+                    QtCore.Qt.ALT | QtCore.Qt.Key_Return
                 )
             elif all([i in ["Return", "Enter"] for i in shortcut.split("+")]):
                 shortcut = QtCore.Qt.Key_Return

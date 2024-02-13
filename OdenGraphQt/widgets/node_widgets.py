@@ -109,8 +109,8 @@ class NodeBaseWidget(QtWidgets.QGraphicsProxyWidget):
         self._node = None
 
     def setToolTip(self, tooltip):
-        tooltip = tooltip.replace('\n', '<br/>')
-        tooltip = '<b>{}</b><br/>{}'.format(self.name, tooltip)
+        tooltip = tooltip.replace("\n", "<br/>")
+        tooltip = "<b>{}</b><br/>{}".format(self.get_name(), tooltip)
         super(NodeBaseWidget, self).setToolTip(tooltip)
 
     def on_value_changed(self, *args, **kwargs):

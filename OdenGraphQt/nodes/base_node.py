@@ -215,7 +215,7 @@ class BaseNode(NodeObject):
         #: redraw node to address calls outside the "__init__" func.
         self.view.draw_node()
 
-    def add_combo_menu(self, name, label='', items=None, tab=None):
+    def add_combo_menu(self, name, label='', items=None, tooltip=None, tab=None):
         """
         Creates a custom property with the :meth:`NodeObject.create_property`
         function and embeds a :class:`PySide6.QtWidgets.QComboBox` widget
@@ -229,6 +229,7 @@ class BaseNode(NodeObject):
             name (str): name for the custom property.
             label (str): label to be displayed.
             items (list[str]): items to be added into the menu.
+            tooltip (str): widget tooltip.
             tab (str): name of the widget tab to display in.
         """
         self.create_property(
@@ -236,9 +237,11 @@ class BaseNode(NodeObject):
             value=items[0] if items else None,
             items=items or [],
             widget_type=NodePropWidgetEnum.QCOMBO_BOX.value,
-            tab=tab
+            widget_tooltip=tooltip,
+            tab=tab,
         )
         widget = NodeComboBox(self.view, name, label, items)
+        widget.setToolTip(tooltip or "")
         widget.value_changed.connect(lambda k, v: self.set_property(k, v))
         self.view.add_widget(widget)
         #: redraw node to address calls outside the "__init__" func.
@@ -272,15 +275,17 @@ class BaseNode(NodeObject):
             name,
             value=text,
             widget_type=NodePropWidgetEnum.QLINE_EDIT.value,
+            widget_tooltip=tooltip,
             tab=tab
         )
         widget = NodeLineEdit(self.view, name, label, text, placeholder_text)
+        widget.setToolTip(tooltip or "")
         widget.value_changed.connect(lambda k, v: self.set_property(k, v))
         self.view.add_widget(widget)
         #: redraw node to address calls outside the "__init__" func.
         self.view.draw_node()
 
-    def add_checkbox(self, name, label='', text='', state=False, tab=None):
+    def add_checkbox(self, name, label='', text='', state=False, tooltip=None, tab=None):
         """
         Creates a custom property with the :meth:`NodeObject.create_property`
         function and embeds a :class:`PySide6.QtWidgets.QCheckBox` widget
@@ -295,15 +300,18 @@ class BaseNode(NodeObject):
             label (str): label to be displayed.
             text (str): checkbox text.
             state (bool): pre-check.
+            tooltip (str): widget tooltip.
             tab (str): name of the widget tab to display in.
         """
         self.create_property(
             name,
             value=state,
             widget_type=NodePropWidgetEnum.QCHECK_BOX.value,
-            tab=tab
+            widget_tooltip=tooltip,
+            tab=tab,
         )
         widget = NodeCheckBox(self.view, name, label, text, state)
+        widget.setToolTip(tooltip or "")
         widget.value_changed.connect(lambda k, v: self.set_property(k, v))
         self.view.add_widget(widget)
         #: redraw node to address calls outside the "__init__" func.

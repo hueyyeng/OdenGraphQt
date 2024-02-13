@@ -128,6 +128,7 @@ class NodeModel(object):
             items=None,
             range=None,
             widget_type=None,
+            widget_tooltip=None,
             tab=None,
             **kwargs,
     ):
@@ -141,6 +142,7 @@ class NodeModel(object):
             items (list[str]): items used by widget type NODE_PROP_QCOMBO.
             range (tuple): min, max values used by NODE_PROP_SLIDER.
             widget_type (int): widget type flag.
+            widget_tooltip (str): custom tooltip for the property widget.
             tab (str): widget tab name.
         """
         widget_type = widget_type or NodePropWidgetEnum.HIDDEN.value
@@ -162,6 +164,8 @@ class NodeModel(object):
                 self._TEMP_property_attrs[name]['items'] = items
             if range:
                 self._TEMP_property_attrs[name]['range'] = range
+            if widget_tooltip:
+                self._TEMP_property_attrs[name]['tooltip'] = widget_tooltip
             if kwargs:
                 self._TEMP_property_attrs[name].update(kwargs)
         else:
@@ -177,6 +181,8 @@ class NodeModel(object):
                 attrs[self.type_][name]['items'] = items
             if range:
                 attrs[self.type_][name]['range'] = range
+            if widget_tooltip:
+                attrs[self.type_][name]['tooltip'] = widget_tooltip
             if kwargs:
                 attrs[self.type_][name].update(kwargs)
 

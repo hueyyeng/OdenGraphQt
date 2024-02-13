@@ -336,6 +336,7 @@ class NodeObject(object):
             items=None,
             range=None,
             widget_type=None,
+            widget_tooltip=None,
             tab=None,
             **kwargs,
     ):
@@ -360,11 +361,15 @@ class NodeObject(object):
                 :attr:`OdenGraphQt.constants.NodePropWidgetEnum.SLIDER`
             widget_type (int): widget flag to display in the
                 :class:`OdenGraphQt.PropertiesBinWidget`
+            widget_tooltip (str): widget tooltip for the property widget
+                displayed in the :class:`NodeGraphQt.PropertiesBinWidget`
             tab (str): name of the widget tab to display in the
                 :class:`OdenGraphQt.PropertiesBinWidget`.
         """
         widget_type = widget_type or NodePropWidgetEnum.HIDDEN.value
-        self.model.add_property(name, value, items, range, widget_type, tab, **kwargs)
+        self.model.add_property(
+            name, value, items, range, widget_type, widget_tooltip, tab, **kwargs
+        )
 
     def properties(self):
         """

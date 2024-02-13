@@ -102,7 +102,7 @@ class _PropertiesContainer(QtWidgets.QWidget):
             self.__class__.__name__, hex(id(self))
         )
 
-    def add_widget(self, name, widget, value, label=None):
+    def add_widget(self, name, widget, value, label=None, tooltip=None):
         """
         Add a property widget to the window.
 
@@ -111,8 +111,13 @@ class _PropertiesContainer(QtWidgets.QWidget):
             widget (BaseProperty): property widget.
             value (object): property value.
             label (str): custom label to display.
+            tooltip (str): custom tooltip.
         """
-        widget.setToolTip(name)
+        if tooltip:
+            widget.setToolTip(f"{name}\n{tooltip}")
+        else:
+            widget.setToolTip(name)
+
         widget.set_value(value)
         if label is None:
             label = name
@@ -427,14 +432,17 @@ class NodePropEditorWidget(QtWidgets.QWidget):
                 if wid_type == NodePropWidgetEnum.HIDDEN.value:
                     continue
 
+                tooltip = None
                 widget = widget_factory.get_widget(wid_type)
                 if prop_name in common_props.keys():
-                    if 'items' in common_props[prop_name]:
-                        widget.set_items(common_props[prop_name]['items'])
-                    if 'range' in common_props[prop_name]:
-                        prop_range = common_props[prop_name]['range']
+                    if "items" in common_props[prop_name]:
+                        widget.set_items(common_props[prop_name]["items"])
+                    if "range" in common_props[prop_name]:
+                        prop_range = common_props[prop_name]["range"]
                         widget.set_min(prop_range[0])
                         widget.set_max(prop_range[1])
+                    if "tooltip" in common_props[prop_name].keys():
+                        tooltip = common_props[prop_name]["tooltip"]
 
                     # For PropLineEditValidatorCheckBox
                     if "checkbox_label" in common_props[prop_name]:
@@ -448,10 +456,11 @@ class NodePropEditorWidget(QtWidgets.QWidget):
                         widget.set_tool_btn(**tool_btn)
 
                 prop_window.add_widget(
-                    prop_name,
-                    widget,
-                    value,
-                    # prop_name.replace('_', ' '),
+                    name=prop_name,
+                    widget=widget,
+                    value=value,
+                    label=prop_name.replace("_", " "),
+                    tooltip=tooltip
                 )
                 widget.value_changed.connect(self._on_property_changed)
 
