@@ -15,7 +15,7 @@ class _NodeGroupBox(QtWidgets.QGroupBox):
         layout.setSpacing(1)
         self.setTitle(label)
 
-    def setTitle(self, text):
+    def setTitle(self, text: str):
         margin = (0, 2, 0, 0) if text else (0, 0, 0, 0)
         self.layout().setContentsMargins(*margin)
         super().setTitle(text)
@@ -40,7 +40,7 @@ class _NodeGroupBox(QtWidgets.QGroupBox):
             'QGroupBox::title': {
                 'subcontrol-origin': 'margin',
                 'subcontrol-position': 'top center',
-                'color': 'rgba({0}, {1}, {2}, 100)'.format(*text_color),
+                'color': 'rgba({0}, {1}, {2}, 200)'.format(*text_color),
                 'padding': '0px',
             }
         }
@@ -69,10 +69,10 @@ class _NodeGroupBox(QtWidgets.QGroupBox):
 
         self.setStyleSheet(stylesheet)
 
-    def add_node_widget(self, widget):
+    def add_node_widget(self, widget: QtWidgets.QWidget):
         self.layout().addWidget(widget)
 
-    def get_node_widget(self):
+    def get_node_widget(self) -> QtWidgets.QWidget:
         return self.layout().itemAt(0).widget()
 
 
@@ -216,7 +216,7 @@ class NodeBaseWidget(QtWidgets.QGraphicsProxyWidget):
         Returns:
             QtWidgets.QWidget: nested QWidget
         """
-        widget = self.widget()
+        widget: _NodeGroupBox = self.widget()
         return widget.get_node_widget()
 
     def set_custom_widget(self, widget):
@@ -228,6 +228,7 @@ class NodeBaseWidget(QtWidgets.QGraphicsProxyWidget):
         """
         if self.widget():
             raise NodeWidgetError('Custom node widget already set.')
+
         group = _NodeGroupBox(self._label)
         # TODO: Need to handle setting minimum width for custom widget
         group.add_node_widget(widget)
@@ -249,8 +250,10 @@ class NodeBaseWidget(QtWidgets.QGraphicsProxyWidget):
         Args:
             label (str): new label ext.
         """
-        if self.widget():
-            self.widget().setTitle(label)
+        widget: _NodeGroupBox = self.widget()
+        if widget:
+            widget.setTitle(label)
+
         self._label = label
 
 
