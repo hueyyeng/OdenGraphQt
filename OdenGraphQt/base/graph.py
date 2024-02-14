@@ -1709,6 +1709,37 @@ class NodeGraph(QtCore.QObject):
         self._undo_stack.clear()
         self._model.session = ""
 
+    def purge_session(self):
+        """
+        Similar to :meth:`NodeGraph.clear_session` but ensure the QGraphicsItem
+        is removed from the scene to avoid Windows fatal exception when exiting the
+        PySide application (likely from items not properly garbage collected).
+
+        This method is not undoable.
+
+        """
+        nodes = self.all_nodes()
+        for n in nodes:
+            n.view.delete()
+
+            if not isinstance(n, BaseNode):
+                continue
+
+            for p in n.input_ports():
+                if p.locked():
+                    p.set_locked(False, connected_ports=False)
+
+                p.clear_connections()
+
+            for p in n.output_ports():
+                if p.locked():
+                    p.set_locked(False, connected_ports=False)
+
+                p.clear_connections()
+
+        self._undo_stack.clear()
+        self._model = NodeGraphModel()
+
     def _serialize(self, nodes):
         """
         serialize nodes to a dict.
@@ -1866,13 +1897,16 @@ class NodeGraph(QtCore.QObject):
                 # after deserialization.
                 in_node.on_input_connected(in_port, out_port)
 
-        node_objs = nodes.values()
+        pos_ = None
         if relative_pos:
-            self._viewer.move_nodes([n.view for n in node_objs])
-            [setattr(n.model, 'pos', n.view.xy_pos) for n in node_objs]
+            pos_ = None
         elif pos:
-            self._viewer.move_nodes([n.view for n in node_objs], pos=pos)
-            [setattr(n.model, 'pos', n.view.xy_pos) for n in node_objs]
+            pos_ = pos
+
+        node_objs = list(nodes.values())
+        self._viewer.move_nodes([n.view for n in node_objs], pos=pos_)
+        for n in node_objs:
+            setattr(n.model, "pos", n.view.xy_pos)
 
         return node_objs
 

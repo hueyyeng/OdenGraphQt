@@ -204,7 +204,7 @@ class NodesRemovedCmd(QtWidgets.QUndoCommand):
 
     Args:
         graph (OdenGraphQt.NodeGraph): node graph.
-        nodes (list[NodeGraphQt.BaseNode or NodeGraphQt.NodeObject]): nodes.
+        nodes (list[OdenGraphQt.BaseNode or OdenGraphQt.NodeObject]): nodes.
         emit_signal (bool): emit node deletion signals. (default: True)
     """
 

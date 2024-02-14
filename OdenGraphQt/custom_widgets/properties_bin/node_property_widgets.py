@@ -771,7 +771,7 @@ class PropertiesBinWidget(QtWidgets.QWidget):
 
         (re-implement for displaying custom node property editor widget.)
         Args:
-            node (NodeGraphQt.NodeObject): node object.
+            node (OdenGraphQt.NodeObject): node object.
 
         Returns:
             NodePropEditorWidget: property editor widget.

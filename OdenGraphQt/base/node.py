@@ -362,7 +362,7 @@ class NodeObject(object):
             widget_type (int): widget flag to display in the
                 :class:`OdenGraphQt.PropertiesBinWidget`
             widget_tooltip (str): widget tooltip for the property widget
-                displayed in the :class:`NodeGraphQt.PropertiesBinWidget`
+                displayed in the :class:`OdenGraphQt.PropertiesBinWidget`
             tab (str): name of the widget tab to display in the
                 :class:`OdenGraphQt.PropertiesBinWidget`.
         """
