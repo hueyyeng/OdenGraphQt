@@ -18,6 +18,7 @@ from OdenGraphQt.base.menu import NodeGraphMenu, NodesMenu
 from OdenGraphQt.base.model import NodeGraphModel
 from OdenGraphQt.base.node import NodeObject
 from OdenGraphQt.base.port import Port
+from OdenGraphQt.base.types import TSerializedData
 from OdenGraphQt.constants import (
     LayoutDirectionEnum,
     MIME_TYPE,
@@ -1740,7 +1741,7 @@ class NodeGraph(QtCore.QObject):
         self._undo_stack.clear()
         self._model = NodeGraphModel()
 
-    def _serialize(self, nodes):
+    def _serialize(self, nodes) -> TSerializedData:
         """
         serialize nodes to a dict.
         (used internally by the node graph)
@@ -1751,7 +1752,7 @@ class NodeGraph(QtCore.QObject):
         Returns:
             dict: serialized data.
         """
-        serial_data = {'graph': {}, 'nodes': {}, 'connections': []}
+        serial_data: TSerializedData = {'graph': {}, 'nodes': {}, 'connections': []}
         nodes_data = {}
 
         # serialize graph session.
@@ -1805,7 +1806,7 @@ class NodeGraph(QtCore.QObject):
 
         return serial_data
 
-    def _deserialize(self, data, relative_pos=False, pos=None):
+    def _deserialize(self, data: TSerializedData, relative_pos=False, pos=None):
         """
         deserialize node data.
         (used internally by the node graph)
